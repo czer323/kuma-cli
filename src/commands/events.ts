@@ -90,14 +90,14 @@ ${chalk.dim("Examples:")}
 
           if (allEvents.length === 0) {
             if (json) {
-              jsonOut({ ok: true, data: [], count: 0, monitors: numMonitors });
+              jsonOut([]);
             }
             console.log("No important events found.");
             return;
           }
 
           if (json) {
-            jsonOut({ ok: true, data: allEvents, count: allEvents.length, monitors: numMonitors });
+            jsonOut(allEvents);
           }
 
           // Single monitor: Time, Status, Message
