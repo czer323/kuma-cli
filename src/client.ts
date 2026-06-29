@@ -402,6 +402,55 @@ export class KumaClient {
     });
   }
 
+  // IMPORTANT HEARTBEAT API
+  async getImportantHeartbeatCount(monitorId?: number): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("monitorImportantHeartbeatListCount timeout")),
+        10000
+      );
+      this.socket.emit(
+        "monitorImportantHeartbeatListCount",
+        monitorId ?? null,
+        (result: { ok: boolean; count?: number; msg?: string }) => {
+          clearTimeout(timer);
+          if (!result.ok) {
+            reject(new Error(result.msg ?? "Failed to fetch important heartbeat count"));
+            return;
+          }
+          resolve(result.count ?? 0);
+        }
+      );
+    });
+  }
+
+  async getImportantHeartbeatListPaged(
+    monitorId: number,
+    offset: number,
+    count: number
+  ): Promise<Heartbeat[]> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("monitorImportantHeartbeatListPaged timeout")),
+        10000
+      );
+      this.socket.emit(
+        "monitorImportantHeartbeatListPaged",
+        monitorId,
+        offset,
+        count,
+        (result: { ok: boolean; data?: Heartbeat[]; msg?: string }) => {
+          clearTimeout(timer);
+          if (!result.ok) {
+            reject(new Error(result.msg ?? "Failed to fetch important heartbeat list"));
+            return;
+          }
+          resolve(result.data ?? []);
+        }
+      );
+    });
+  }
+
   // BUG-02 fix: statusPageList is pushed by Kuma automatically during afterLogin,
   // not as a response to any explicit emit. The old code registered a waitFor
   // listener *after* the push had already fired, causing a guaranteed timeout.
