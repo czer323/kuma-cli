@@ -13,6 +13,7 @@ import { configCommand } from "./commands/config.js";
 import { instancesCommand } from "./commands/instances.js";
 import { useCommand } from "./commands/use.js";
 import { clusterCommand } from "./commands/cluster.js";
+import { eventsCommand } from "./commands/events.js";
 import { launchDashboard } from "./commands/dashboard.js";
 import { getConfig, getConfigPath, getAllInstances, getAllClusters, getActiveContext, getInstanceConfig, getInstanceCluster } from "./config.js";
 import chalk from "chalk";
@@ -157,8 +158,8 @@ upgradeCommand(program);
 notificationsCommand(program);
 configCommand(program);
 instancesCommand(program);
-useCommand(program);
 clusterCommand(program);
+eventsCommand(program);
 
 // If no subcommand is given, launch the TUI dashboard
 const args = process.argv.slice(2);

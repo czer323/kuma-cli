@@ -280,6 +280,49 @@ var KumaClient = class {
       );
     });
   }
+  // IMPORTANT HEARTBEAT API
+  async getImportantHeartbeatCount(monitorId) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("monitorImportantHeartbeatListCount timeout")),
+        1e4
+      );
+      this.socket.emit(
+        "monitorImportantHeartbeatListCount",
+        monitorId ?? null,
+        (result) => {
+          clearTimeout(timer);
+          if (!result.ok) {
+            reject(new Error(result.msg ?? "Failed to fetch important heartbeat count"));
+            return;
+          }
+          resolve(result.count ?? 0);
+        }
+      );
+    });
+  }
+  async getImportantHeartbeatListPaged(monitorId, offset, count) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("monitorImportantHeartbeatListPaged timeout")),
+        1e4
+      );
+      this.socket.emit(
+        "monitorImportantHeartbeatListPaged",
+        monitorId,
+        offset,
+        count,
+        (result) => {
+          clearTimeout(timer);
+          if (!result.ok) {
+            reject(new Error(result.msg ?? "Failed to fetch important heartbeat list"));
+            return;
+          }
+          resolve(result.data ?? []);
+        }
+      );
+    });
+  }
   // BUG-02 fix: statusPageList is pushed by Kuma automatically during afterLogin,
   // not as a response to any explicit emit. The old code registered a waitFor
   // listener *after* the push had already fired, causing a guaranteed timeout.
@@ -2564,81 +2607,29 @@ function instancesCommand(program2) {
   });
 }
 
-// src/commands/use.ts
-import chalk10 from "chalk";
-function useCommand(program2) {
-  program2.command("use [name]").description("Switch the active instance or cluster (affects all subsequent commands)").option("--cluster <name>", "Set a cluster as active context (commands default to its primary instance)").option("--json", "Output as JSON").addHelpText(
-    "after",
-    `
-${chalk10.dim("Arguments:")}
-  ${chalk10.cyan("[name]")}  The alias of an instance (as set with ${chalk10.cyan("kuma login --as <alias>")})
-
-${chalk10.dim("Examples:")}
-  ${chalk10.cyan("kuma use server1")}                  ${chalk10.dim("# Switch to instance 'server1'")}
-  ${chalk10.cyan("kuma use --cluster my-cluster")}     ${chalk10.dim("# Switch to cluster (uses its primary)")}
-  ${chalk10.cyan("kuma instances list")}               ${chalk10.dim("# See available instance aliases")}
-  ${chalk10.cyan("kuma cluster list")}                 ${chalk10.dim("# See available cluster names")}
-
-${chalk10.dim("Once active, all commands target that instance unless overridden with --instance or --cluster.")}
-`
-  ).action((name, opts) => {
-    if (opts.cluster) {
-      const cluster = getClusterConfig(opts.cluster);
-      if (!cluster) {
-        const all = Object.keys(getAllClusters());
-        const msg = all.length ? `Cluster '${opts.cluster}' not found. Available: ${all.join(", ")}` : `Cluster '${opts.cluster}' not found. No clusters configured.`;
-        if (isJsonMode(opts)) return jsonError(msg);
-        error(msg);
-        process.exit(1);
-      }
-      setActiveContext({ type: "cluster", name: opts.cluster });
-      if (isJsonMode(opts)) return jsonOut({ active: { type: "cluster", name: opts.cluster, primary: cluster.primary } });
-      success(`Active context: cluster '${opts.cluster}' (primary: ${cluster.primary})`);
-      return;
-    }
-    if (!name) {
-      const msg = "Specify an instance name. Run: kuma instances list";
-      if (isJsonMode(opts)) return jsonError(msg);
-      error(msg);
-      process.exit(1);
-    }
-    const inst = getInstanceConfig(name);
-    if (!inst) {
-      const all = Object.keys(getAllInstances());
-      const msg = all.length ? `Instance '${name}' not found. Available: ${all.join(", ")}` : `Instance '${name}' not found. No instances configured.`;
-      if (isJsonMode(opts)) return jsonError(msg);
-      error(msg);
-      process.exit(1);
-    }
-    setActiveContext({ type: "instance", name });
-    if (isJsonMode(opts)) return jsonOut({ active: { type: "instance", name } });
-    success(`Active instance: '${name}' (${inst.url})`);
-  });
-}
-
 // src/commands/cluster.ts
-import chalk11 from "chalk";
+import chalk10 from "chalk";
 function clusterCommand(program2) {
   const cluster = program2.command("cluster").description("Manage clusters of Uptime Kuma instances for high availability");
   cluster.command("create <name>").description("Create a cluster from existing instances").requiredOption("--instances <names>", "Comma-separated instance aliases (from kuma login --as)").requiredOption("--primary <name>", "Instance alias to use as the primary (source of truth)").option("--json", "Output as JSON").addHelpText(
     "after",
     `
-${chalk11.dim("Arguments:")}
-  ${chalk11.cyan("<name>")}  Any label you choose for this cluster (e.g. "ha-group", "prod-backup")
+${chalk10.dim("Arguments:")}
+  ${chalk10.cyan("<name>")}  Any label you choose for this cluster (e.g. "ha-group", "prod-backup")
 
-${chalk11.dim("How it works:")}
+${chalk10.dim("How it works:")}
   1. First, login to each Uptime Kuma server and give it an alias:
-     ${chalk11.cyan("kuma login https://kuma1.example.com --as server1")}
-     ${chalk11.cyan("kuma login https://kuma2.example.com --as server2")}
+     ${chalk10.cyan("kuma login https://kuma1.example.com --as server1")}
+     ${chalk10.cyan("kuma login https://kuma2.example.com --as server2")}
 
   2. Then create a cluster using those aliases:
-     ${chalk11.cyan("kuma cluster create my-cluster --instances server1,server2 --primary server1")}
+     ${chalk10.cyan("kuma cluster create my-cluster --instances server1,server2 --primary server1")}
 
   3. Sync the primary's monitors to all secondaries:
-     ${chalk11.cyan("kuma cluster sync my-cluster")}
+     ${chalk10.cyan("kuma cluster sync my-cluster")}
 
-${chalk11.dim("The --primary is the source of truth \u2014 its monitors and notifications")}
-${chalk11.dim("will be replicated to the other instances during sync.")}
+${chalk10.dim("The --primary is the source of truth \u2014 its monitors and notifications")}
+${chalk10.dim("will be replicated to the other instances during sync.")}
 `
   ).action((name, opts) => {
     const instanceNames = opts.instances.split(",").map((s) => s.trim());
@@ -2771,21 +2762,21 @@ ${chalk11.dim("will be replicated to the other instances during sync.")}
   cluster.command("sync <name>").description("Sync monitors and notifications from the primary instance to all secondaries").option("--dry-run", "Show what would be synced without making changes").option("--json", "Output as JSON").addHelpText(
     "after",
     `
-${chalk11.dim("Arguments:")}
-  ${chalk11.cyan("<name>")}  The cluster name (as created with ${chalk11.cyan("kuma cluster create")})
+${chalk10.dim("Arguments:")}
+  ${chalk10.cyan("<name>")}  The cluster name (as created with ${chalk10.cyan("kuma cluster create")})
 
-${chalk11.dim("What gets synced:")}
-  1. ${chalk11.bold("Monitors")} from the primary are replicated to each secondary.
+${chalk10.dim("What gets synced:")}
+  1. ${chalk10.bold("Monitors")} from the primary are replicated to each secondary.
      Existing monitors (matched by name + type + URL) are skipped.
-  2. ${chalk11.bold("Health monitors")} are created so each instance checks the others.
-  3. ${chalk11.bold("Notifications")} are copied to secondaries but ${chalk11.yellow("kept disabled")}
+  2. ${chalk10.bold("Health monitors")} are created so each instance checks the others.
+  3. ${chalk10.bold("Notifications")} are copied to secondaries but ${chalk10.yellow("kept disabled")}
      to avoid duplicate alerts. The primary owns active notifications.
 
-${chalk11.dim("Examples:")}
-  ${chalk11.cyan("kuma cluster sync my-cluster --dry-run")}   ${chalk11.dim("# Preview without changes")}
-  ${chalk11.cyan("kuma cluster sync my-cluster")}             ${chalk11.dim("# Run the actual sync")}
+${chalk10.dim("Examples:")}
+  ${chalk10.cyan("kuma cluster sync my-cluster --dry-run")}   ${chalk10.dim("# Preview without changes")}
+  ${chalk10.cyan("kuma cluster sync my-cluster")}             ${chalk10.dim("# Run the actual sync")}
 
-${chalk11.dim("Sync is idempotent \u2014 safe to run multiple times.")}
+${chalk10.dim("Sync is idempotent \u2014 safe to run multiple times.")}
 `
   ).action(async (name, opts) => {
     const clusterConfig = getClusterConfig(name);
@@ -2958,6 +2949,101 @@ ${chalk11.dim("Sync is idempotent \u2014 safe to run multiple times.")}
       }
     }
   });
+}
+
+// src/commands/events.ts
+import chalk11 from "chalk";
+function eventsCommand(program2) {
+  const ev = program2.command("events").description("View important (state-transition) heartbeat events").addHelpText(
+    "after",
+    `
+${chalk11.dim("Subcommands:")}
+  ${chalk11.cyan("events list <monitor-ids...>")}   Merged timeline of important events across monitors
+
+${chalk11.dim("Run")} ${chalk11.cyan("kuma events list --help")} ${chalk11.dim("for examples.")}
+`
+  );
+  ev.command("list <monitor-ids...>").description("Fetch important events for one or more monitors and merge into a single timeline").option("--limit <n>", "Max events per monitor (default: 50)", "50").option("--offset <n>", "Pagination offset (default: 0)", "0").option("--json", "Output as JSON ({ ok, data })").option("--instance <name>", "Target a specific instance").addHelpText(
+    "after",
+    `
+${chalk11.dim("Examples:")}
+  ${chalk11.cyan("kuma events list 4")}                              Latest events for DNS monitor
+  ${chalk11.cyan("kuma events list 4 2 3")}                           Merged timeline across 3 monitors
+  ${chalk11.cyan("kuma events list 4 --limit 100")}                   Show more events
+  ${chalk11.cyan("kuma events list 4 --json")}                        Raw JSON for agent consumption
+`
+  ).action(
+    async (monitorIds, opts) => {
+      const json = isJsonMode(opts);
+      for (const id of monitorIds) {
+        const parsed = parseInt(id, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          handleError(
+            new Error(`Invalid monitor ID: "${id}". Must be a positive integer.`),
+            opts
+          );
+        }
+      }
+      try {
+        const { client } = await resolveClient(opts);
+        const limit = parseInt(opts.limit ?? "50", 10);
+        const offset = parseInt(opts.offset ?? "0", 10);
+        const numMonitors = monitorIds.length;
+        const allEvents = [];
+        for (const id of monitorIds) {
+          const parsedId = parseInt(id, 10);
+          const heartbeats = await client.getImportantHeartbeatListPaged(
+            parsedId,
+            offset,
+            limit
+          );
+          allEvents.push(...heartbeats);
+        }
+        client.disconnect();
+        allEvents.sort((a, b) => {
+          const ta = new Date(a.time).getTime();
+          const tb = new Date(b.time).getTime();
+          return tb - ta;
+        });
+        if (allEvents.length === 0) {
+          if (json) {
+            jsonOut([]);
+          }
+          console.log("No important events found.");
+          return;
+        }
+        if (json) {
+          jsonOut(allEvents);
+        }
+        const showMonitor = numMonitors > 1;
+        const headers = showMonitor ? ["Monitor", "Time", "Status", "Message"] : ["Time", "Status", "Message"];
+        const table = createTable(headers);
+        allEvents.forEach((evt) => {
+          if (showMonitor) {
+            table.push([
+              String(evt.monitorID),
+              formatDate(evt.time),
+              statusLabel(evt.status),
+              evt.msg ?? "\u2014"
+            ]);
+          } else {
+            table.push([
+              formatDate(evt.time),
+              statusLabel(evt.status),
+              evt.msg ?? "\u2014"
+            ]);
+          }
+        });
+        console.log(table.toString());
+        console.log(
+          `
+${allEvents.length} event(s) across ${numMonitors} monitor(s)`
+        );
+      } catch (err) {
+        handleError(err, opts);
+      }
+    }
+  );
 }
 
 // src/tui/render.tsx
@@ -4706,8 +4792,8 @@ upgradeCommand(program);
 notificationsCommand(program);
 configCommand(program);
 instancesCommand(program);
-useCommand(program);
 clusterCommand(program);
+eventsCommand(program);
 var args = process.argv.slice(2);
 var hasSubcommand = args.length > 0 && !args[0].startsWith("-");
 if (!hasSubcommand && !args.includes("-h") && !args.includes("--help") && !args.includes("-V") && !args.includes("--version")) {

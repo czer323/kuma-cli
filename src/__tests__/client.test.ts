@@ -59,3 +59,81 @@ describe("KumaClient.addMonitor", () => {
     expect(payload).not.toHaveProperty("accepted_statuscodes_json");
   });
 });
+
+describe("getImportantHeartbeatCount", () => {
+  function setupEmit(result: { ok: boolean; count?: number; msg?: string }) {
+    mockEmit.mockImplementation((event: string, ...args: unknown[]) => {
+      if (event === "monitorImportantHeartbeatListCount") {
+        const cb = args[args.length - 1] as (r: { ok: boolean; count?: number; msg?: string }) => void;
+        cb(result);
+      }
+    });
+  }
+
+  it("emits monitorImportantHeartbeatListCount with monitorId when provided", async () => {
+    setupEmit({ ok: true, count: 42 });
+    const client = new KumaClient("http://dummy:3000");
+    const count = await client.getImportantHeartbeatCount(1);
+    expect(count).toBe(42);
+  });
+
+  it("emits with null when called without args", async () => {
+    setupEmit({ ok: true, count: 100 });
+    const client = new KumaClient("http://dummy:3000");
+    const count = await client.getImportantHeartbeatCount();
+    const emitCall = mockEmit.mock.calls.find(
+      (c: unknown[]) => c[0] === "monitorImportantHeartbeatListCount"
+    );
+    expect(emitCall).toBeDefined();
+    expect((emitCall as unknown[])[1]).toBeNull();
+  });
+
+  it("rejects when result.ok is false", async () => {
+    setupEmit({ ok: false, msg: "Not found" });
+    const client = new KumaClient("http://dummy:3000");
+    await expect(client.getImportantHeartbeatCount(1)).rejects.toThrow("Not found");
+  });
+
+  it("resolves count 0 when result.count is undefined", async () => {
+    setupEmit({ ok: true });
+    const client = new KumaClient("http://dummy:3000");
+    const count = await client.getImportantHeartbeatCount(1);
+    expect(count).toBe(0);
+  });
+});
+
+describe("getImportantHeartbeatListPaged", () => {
+  function setupEmit(result: { ok: boolean; data?: unknown[]; msg?: string }) {
+    mockEmit.mockImplementation((event: string, ...args: unknown[]) => {
+      if (event === "monitorImportantHeartbeatListPaged") {
+        const cb = args[args.length - 1] as (r: { ok: boolean; data?: unknown[]; msg?: string }) => void;
+        cb(result);
+      }
+    });
+  }
+
+  it("emits monitorImportantHeartbeatListPaged with correct params", async () => {
+    const mockData = [
+      { id: 1, monitorID: 5, status: 1, time: "2025-01-01T00:00:00.000Z" },
+      { id: 2, monitorID: 5, status: 0, time: "2025-01-01T01:00:00.000Z", msg: "timeout" },
+    ];
+    setupEmit({ ok: true, data: mockData });
+
+    const client = new KumaClient("http://dummy:3000");
+    const result = await client.getImportantHeartbeatListPaged(5, 0, 10);
+    expect(result).toEqual(mockData);
+  });
+
+  it("rejects when result.ok is false", async () => {
+    setupEmit({ ok: false, msg: "Invalid monitor" });
+    const client = new KumaClient("http://dummy:3000");
+    await expect(client.getImportantHeartbeatListPaged(1, 0, 20)).rejects.toThrow("Invalid monitor");
+  });
+
+  it("resolves empty array when result.data is undefined", async () => {
+    setupEmit({ ok: true });
+    const client = new KumaClient("http://dummy:3000");
+    const result = await client.getImportantHeartbeatListPaged(1, 0, 10);
+    expect(result).toEqual([]);
+  });
+});
