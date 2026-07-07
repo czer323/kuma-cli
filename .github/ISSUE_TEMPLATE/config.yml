@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Uptime Kuma Documentation
+    url: https://github.com/louislam/uptime-kuma/wiki
+    about: Having trouble with your Uptime Kuma server? Check the official docs.
+  - name: kuma-cli Source
+    url: https://github.com/pablofmorales/kuma-cli
+    about: Original upstream repository.

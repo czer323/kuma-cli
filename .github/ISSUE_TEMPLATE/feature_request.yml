@@ -1,0 +1,98 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What would you like kuma-cli to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Why is this needed? What problem does it solve?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of kuma-cli does this relate to?
+      multiple: true
+      options:
+        - Command (monitors, events, heartbeat, etc.)
+        - TUI / Dashboard
+        - Configuration
+        - Authentication / Login
+        - Instance / Cluster management
+        - Output / Formatting (JSON, table)
+        - Installation / Setup
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What behaviors or outcomes should be true before this is considered done?
+      placeholder: |
+        Example:
+        - `kuma monitors list --filter status=down` returns only paused monitors
+        - Existing tests remain green
+        - Exit code 0 on success, non-zero on failure
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-files
+    attributes:
+      label: Related Files
+      description: Which files or modules would likely change? This forces upfront codebase mapping before the next agent picks this up.
+      placeholder: |
+        Example:
+        - src/commands/monitors.ts
+        - src/config.ts
+        - src/client.ts
+    validations:
+      required: true
+
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: Test Plan
+      description: Which automated tests or coverage changes should accompany this work?
+      placeholder: |
+        Example:
+        - Add unit tests for src/client.ts
+        - Keep npm test green
+        - npm run check must pass
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any workarounds or other approaches you've tried?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, references, or design notes.

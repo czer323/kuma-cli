@@ -7,5 +7,7 @@ on:
 
 jobs:
   security:
+    # Only run on upstream — forks don't have access to the reusable workflow
+    if: github.repository == 'pablofmorales/kuma-cli'
     uses: pablofmorales/security-workflows/.github/workflows/security.yml@main
     secrets: inherit

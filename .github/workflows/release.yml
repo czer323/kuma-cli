@@ -17,6 +17,8 @@ permissions:
 jobs:
   release:
     name: Semantic Release
+    # Only run on the upstream repo — forks don't publish to npm
+    if: github.repository == 'pablofmorales/kuma-cli'
     runs-on: ubuntu-latest
 
     steps:

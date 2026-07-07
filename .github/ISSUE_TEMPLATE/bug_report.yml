@@ -1,0 +1,132 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact command(s) you ran and what happened.
+      placeholder: |
+        1. Run `kuma monitors list`
+        2. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this reproduce?
+      options:
+        - Always
+        - Intermittent
+        - Once
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error Output / Logs
+      description: Paste any error messages, stack traces, or terminal output.
+      render: shell
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows (native)
+        - Windows (WSL)
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Output of `node --version`
+      placeholder: "e.g. 22.14.0"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: kuma-cli Version
+      description: Output of `kuma --version`
+      placeholder: "e.g. 1.7.0"
+
+  - type: input
+    id: kuma-version
+    attributes:
+      label: Uptime Kuma Version
+      description: Which version of Uptime Kuma is your server running?
+      placeholder: "e.g. 2.1.1"
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Config (sanitized)
+      description: Paste your config file with sensitive values redacted. Only if relevant to the bug.
+      render: yaml
+
+  - type: dropdown
+    id: test-impact
+    attributes:
+      label: Test Impact
+      description: What test coverage should exist for this fix?
+      options:
+        - Needs a new unit test
+        - Needs a new integration test
+        - Existing test should already catch this
+        - Unsure
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation-plan
+    attributes:
+      label: Validation Plan
+      description: Which commands or tests should prove this bug is fixed?
+      placeholder: |
+        Example:
+        - node --import tsx --test tests/unit/my-file.test.ts
+        - npm test
+        - npm run check
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Screenshots, related issues, or anything else relevant.
