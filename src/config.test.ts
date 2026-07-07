@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { migrateConfig, deriveInstanceName, getConfigDir, migrateConfigPath } from "../config.js";
+import { migrateConfig, deriveInstanceName, getConfigDir, migrateConfigPath } from "./config.js";
 import * as os from "os";
 import * as path from "path";
 

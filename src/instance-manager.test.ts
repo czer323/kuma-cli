@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vite-plus/test";
-import { resolveInstanceName } from "../instance-manager.js";
+import { resolveInstanceName } from "./instance-manager.js";
 
-vi.mock("../config.js", () => ({
+vi.mock("./config.js", () => ({
   getInstanceConfig: vi.fn(),
   getClusterConfig: vi.fn(),
   getActiveContext: vi.fn(),
   getAllInstances: vi.fn(),
 }));
 
-vi.mock("../client.js", () => ({
+vi.mock("./client.js", () => ({
   createAuthenticatedClient: vi.fn(),
 }));
 
@@ -17,7 +17,7 @@ import {
   getClusterConfig,
   getActiveContext,
   getAllInstances,
-} from "../config.js";
+} from "./config.js";
 
 const mockGetInstanceConfig = vi.mocked(getInstanceConfig);
 const mockGetClusterConfig = vi.mocked(getClusterConfig);

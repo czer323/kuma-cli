@@ -15,7 +15,7 @@ vi.mock("socket.io-client", () => ({
   io: mockIo,
 }));
 
-import { KumaClient } from "../client.js";
+import { KumaClient } from "./client.js";
 
 beforeEach(() => {
   vi.clearAllMocks();

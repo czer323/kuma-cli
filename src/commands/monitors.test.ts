@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { Command } from "commander";
-import { monitorsCommand } from "../commands/monitors.js";
+import { monitorsCommand } from "./monitors.js";
 
 describe("monitors add command", () => {
   it("accepts --keyword option", () => {

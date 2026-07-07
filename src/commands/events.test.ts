@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { Command } from "commander";
-import { eventsCommand } from "../commands/events.js";
+import { eventsCommand } from "./events.js";
 
 describe("events command", () => {
   describe("command registration", () => {
