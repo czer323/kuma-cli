@@ -21,8 +21,14 @@ export async function renderDashboard(opts: DashboardOptions): Promise<void> {
 
   // Restore on unexpected exit
   process.on("exit", restoreScreen);
-  process.on("SIGINT", () => { restoreScreen(); process.exit(0); });
-  process.on("SIGTERM", () => { restoreScreen(); process.exit(0); });
+  process.on("SIGINT", () => {
+    restoreScreen();
+    process.exit(0);
+  });
+  process.on("SIGTERM", () => {
+    restoreScreen();
+    process.exit(0);
+  });
 
   const { waitUntilExit } = render(
     <App
@@ -30,7 +36,7 @@ export async function renderDashboard(opts: DashboardOptions): Promise<void> {
       instanceName={opts.instanceName}
       clusterName={opts.clusterName}
       refreshInterval={opts.refreshInterval}
-    />
+    />,
   );
 
   await waitUntilExit();

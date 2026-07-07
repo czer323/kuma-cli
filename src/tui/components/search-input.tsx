@@ -7,13 +7,12 @@ export interface SearchInputProps {
   onChange: (value: string) => void;
 }
 
-export function SearchInput({
-  value,
-  onChange,
-}: SearchInputProps): React.ReactElement {
+export function SearchInput({ value, onChange }: SearchInputProps): React.ReactElement {
   return (
     <Box>
-      <Text bold color="yellow">/</Text>
+      <Text bold color="yellow">
+        /
+      </Text>
       <Text> </Text>
       <TextInput value={value} onChange={onChange} placeholder="type to filter by name..." />
     </Box>

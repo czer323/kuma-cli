@@ -12,11 +12,7 @@ type Field = "url" | "username" | "password";
 
 const FIELDS: Field[] = ["url", "username", "password"];
 
-export function LoginScreen({
-  onLogin,
-  error,
-  loading,
-}: LoginScreenProps): React.ReactElement {
+export function LoginScreen({ onLogin, error, loading }: LoginScreenProps): React.ReactElement {
   const [url, setUrl] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +56,9 @@ export function LoginScreen({
     <Box flexDirection="column" paddingX={2} paddingY={1}>
       <Box flexDirection="column">
         {LOGO.map((line, i) => (
-          <Text key={i} color="#db2777" bold>{line}</Text>
+          <Text key={i} color="#db2777" bold>
+            {line}
+          </Text>
         ))}
       </Box>
       <Box marginTop={1} marginBottom={1} flexDirection="column">
@@ -70,14 +68,12 @@ export function LoginScreen({
       <Box flexDirection="column" marginBottom={1}>
         <Box>
           <Box width={12}>
-            <Text bold color={activeField === "url" ? "cyan" : undefined}>URL:</Text>
+            <Text bold color={activeField === "url" ? "cyan" : undefined}>
+              URL:
+            </Text>
           </Box>
           {activeField === "url" ? (
-            <TextInput
-              value={url}
-              onChange={setUrl}
-              placeholder="https://kuma.example.com"
-            />
+            <TextInput value={url} onChange={setUrl} placeholder="https://kuma.example.com" />
           ) : (
             <Text>{url || <Text dimColor>https://kuma.example.com</Text>}</Text>
           )}
@@ -85,14 +81,12 @@ export function LoginScreen({
 
         <Box>
           <Box width={12}>
-            <Text bold color={activeField === "username" ? "cyan" : undefined}>Username:</Text>
+            <Text bold color={activeField === "username" ? "cyan" : undefined}>
+              Username:
+            </Text>
           </Box>
           {activeField === "username" ? (
-            <TextInput
-              value={username}
-              onChange={setUsername}
-              placeholder="admin"
-            />
+            <TextInput value={username} onChange={setUsername} placeholder="admin" />
           ) : (
             <Text>{username || <Text dimColor>admin</Text>}</Text>
           )}
@@ -100,15 +94,12 @@ export function LoginScreen({
 
         <Box>
           <Box width={12}>
-            <Text bold color={activeField === "password" ? "cyan" : undefined}>Password:</Text>
+            <Text bold color={activeField === "password" ? "cyan" : undefined}>
+              Password:
+            </Text>
           </Box>
           {activeField === "password" ? (
-            <TextInput
-              value={password}
-              onChange={setPassword}
-              placeholder="********"
-              mask="*"
-            />
+            <TextInput value={password} onChange={setPassword} placeholder="********" mask="*" />
           ) : (
             <Text>{maskedPassword || <Text dimColor>********</Text>}</Text>
           )}
@@ -117,7 +108,9 @@ export function LoginScreen({
 
       {!url.startsWith("https://") && url.length > 0 && (
         <Box marginBottom={1}>
-          <Text color="yellow">Warning: connecting over HTTP. Credentials will be sent in cleartext.</Text>
+          <Text color="yellow">
+            Warning: connecting over HTTP. Credentials will be sent in cleartext.
+          </Text>
         </Box>
       )}
 
@@ -130,7 +123,7 @@ export function LoginScreen({
       {loading ? (
         <Text color="yellow">Connecting...</Text>
       ) : (
-        <Text dimColor>Enter=next field/submit  Tab=switch field  Fill all fields to connect</Text>
+        <Text dimColor>Enter=next field/submit Tab=switch field Fill all fields to connect</Text>
       )}
     </Box>
   );

@@ -14,7 +14,11 @@ interface MonitorDetailProps {
 function formatTime(timeStr: string): string {
   try {
     const d = new Date(timeStr);
-    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   } catch {
     return timeStr;
   }
@@ -34,7 +38,12 @@ function uptimeColor(pct: number): string {
   return "red";
 }
 
-export function MonitorDetail({ monitor, heartbeats, loading, error }: MonitorDetailProps): React.ReactElement {
+export function MonitorDetail({
+  monitor,
+  heartbeats,
+  loading,
+  error,
+}: MonitorDetailProps): React.ReactElement {
   const recentBeats = heartbeats.slice(-20);
   const totalBeats = heartbeats.length;
   const upBeats = heartbeats.filter((h) => h.status === 1).length;
@@ -43,38 +52,52 @@ export function MonitorDetail({ monitor, heartbeats, loading, error }: MonitorDe
   const pingsWithValues = heartbeats.filter((h) => h.ping != null && h.ping > 0);
   const avgPing =
     pingsWithValues.length > 0
-      ? Math.round(pingsWithValues.reduce((sum, h) => sum + (h.ping ?? 0), 0) / pingsWithValues.length)
+      ? Math.round(
+          pingsWithValues.reduce((sum, h) => sum + (h.ping ?? 0), 0) / pingsWithValues.length,
+        )
       : null;
 
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold color="cyan">Monitor Detail</Text>
+        <Text bold color="cyan">
+          Monitor Detail
+        </Text>
       </Box>
 
       <Box flexDirection="column" marginBottom={1}>
         <Box>
-          <Box width={16}><Text bold>Name:</Text></Box>
+          <Box width={16}>
+            <Text bold>Name:</Text>
+          </Box>
           <Text>{monitor.name}</Text>
         </Box>
         <Box>
-          <Box width={16}><Text bold>ID:</Text></Box>
+          <Box width={16}>
+            <Text bold>ID:</Text>
+          </Box>
           <Text>{String(monitor.id)}</Text>
         </Box>
         <Box>
-          <Box width={16}><Text bold>Type:</Text></Box>
+          <Box width={16}>
+            <Text bold>Type:</Text>
+          </Box>
           <Text>{monitor.type}</Text>
         </Box>
         {monitor.url ? (
           <Box>
-            <Box width={16}><Text bold>URL:</Text></Box>
+            <Box width={16}>
+              <Text bold>URL:</Text>
+            </Box>
             <Text>{monitor.url}</Text>
           </Box>
         ) : null}
       </Box>
 
       <Box marginBottom={1}>
-        <Box width={16}><Text bold>Status:</Text></Box>
+        <Box width={16}>
+          <Text bold>Status:</Text>
+        </Box>
         <StatusBadge status={monitor.status} />
       </Box>
 
@@ -82,12 +105,17 @@ export function MonitorDetail({ monitor, heartbeats, loading, error }: MonitorDe
         <Box>
           <Text bold>Uptime: </Text>
           <Text color={uptimeColor(uptimePct)}>{uptimePct.toFixed(1)}%</Text>
-          <Text dimColor> ({upBeats}/{totalBeats} beats)</Text>
+          <Text dimColor>
+            {" "}
+            ({upBeats}/{totalBeats} beats)
+          </Text>
         </Box>
         <Box>
           <Text bold>Avg Response: </Text>
           {avgPing != null ? (
-            <Text color={avgPing < 200 ? "green" : avgPing < 500 ? "yellow" : "red"}>{avgPing}ms</Text>
+            <Text color={avgPing < 200 ? "green" : avgPing < 500 ? "yellow" : "red"}>
+              {avgPing}ms
+            </Text>
           ) : (
             <Text dimColor>--</Text>
           )}
@@ -105,26 +133,44 @@ export function MonitorDetail({ monitor, heartbeats, loading, error }: MonitorDe
         ) : (
           <Box flexDirection="column" marginTop={0}>
             <Box>
-              <Box width={14}><Text bold dimColor>Time</Text></Box>
-              <Box width={12}><Text bold dimColor>Status</Text></Box>
-              <Box width={12}><Text bold dimColor>Response</Text></Box>
-              <Box width={40}><Text bold dimColor>Message</Text></Box>
+              <Box width={14}>
+                <Text bold dimColor>
+                  Time
+                </Text>
+              </Box>
+              <Box width={12}>
+                <Text bold dimColor>
+                  Status
+                </Text>
+              </Box>
+              <Box width={12}>
+                <Text bold dimColor>
+                  Response
+                </Text>
+              </Box>
+              <Box width={40}>
+                <Text bold dimColor>
+                  Message
+                </Text>
+              </Box>
             </Box>
             {[...recentBeats].reverse().map((hb) => {
               const st = statusText(hb.status);
               return (
                 <Box key={hb.id}>
-                  <Box width={14}><Text dimColor>{formatTime(hb.time)}</Text></Box>
-                  <Box width={12}><Text color={st.color}>{st.label}</Text></Box>
+                  <Box width={14}>
+                    <Text dimColor>{formatTime(hb.time)}</Text>
+                  </Box>
                   <Box width={12}>
-                    {hb.ping != null ? (
-                      <Text>{hb.ping}ms</Text>
-                    ) : (
-                      <Text dimColor>--</Text>
-                    )}
+                    <Text color={st.color}>{st.label}</Text>
+                  </Box>
+                  <Box width={12}>
+                    {hb.ping != null ? <Text>{hb.ping}ms</Text> : <Text dimColor>--</Text>}
                   </Box>
                   <Box width={40}>
-                    <Text dimColor wrap="truncate">{hb.msg ?? ""}</Text>
+                    <Text dimColor wrap="truncate">
+                      {hb.msg ?? ""}
+                    </Text>
                   </Box>
                 </Box>
               );

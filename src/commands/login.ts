@@ -11,11 +11,12 @@ const { prompt } = enquirer as any;
 export function loginCommand(program: Command): void {
   program
     .command("login <url>")
-    .description(
-      "Authenticate with an Uptime Kuma instance and save the session token locally"
-    )
+    .description("Authenticate with an Uptime Kuma instance and save the session token locally")
     .option("--json", "Output as JSON ({ ok, data })")
-    .option("--as <alias>", "Save this instance under a custom alias (default: derived from hostname)")
+    .option(
+      "--as <alias>",
+      "Save this instance under a custom alias (default: derived from hostname)",
+    )
     .addHelpText(
       "after",
       `
@@ -37,7 +38,7 @@ ${chalk.dim("Notes:")}
   (e.g. --instance server1, or when creating clusters).
   Credentials are never stored — only the session token is saved.
   Token location: run ${chalk.cyan("kuma status")} to see the config path.
-`
+`,
     )
     .action(async (url: string, opts: { json?: boolean; as?: string }) => {
       const json = isJsonMode(opts);
@@ -50,14 +51,19 @@ ${chalk.dim("Notes:")}
         if (!normalizedUrl.startsWith("https://")) {
           if (json) {
             // In JSON mode, surface as a warning but don't block — caller decides
-            console.log(JSON.stringify({
-              warning: "Connecting over HTTP. Credentials will be transmitted in cleartext. Use HTTPS in production."
-            }));
+            console.log(
+              JSON.stringify({
+                warning:
+                  "Connecting over HTTP. Credentials will be transmitted in cleartext. Use HTTPS in production.",
+              }),
+            );
           } else {
-            console.warn(chalk.yellow(
-              "⚠️  Warning: connecting over HTTP. Your credentials will be sent in cleartext.\n" +
-              "   Use https:// in production environments."
-            ));
+            console.warn(
+              chalk.yellow(
+                "⚠️  Warning: connecting over HTTP. Your credentials will be sent in cleartext.\n" +
+                  "   Use https:// in production environments.",
+              ),
+            );
           }
         }
 

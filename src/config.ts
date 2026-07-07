@@ -30,7 +30,10 @@ export interface KumaConfigSchema {
 export function getConfigDir(): string {
   const platform = process.platform;
   if (platform === "win32") {
-    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "kuma-cli");
+    return path.join(
+      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
+      "kuma-cli",
+    );
   }
   const configHome = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
   return path.join(configHome, "kuma-cli");
@@ -52,10 +55,18 @@ function getOldConfigFilePath(): string {
     return path.join(os.homedir(), "Library", "Preferences", "kuma-cli-nodejs", "config.json");
   }
   if (platform === "win32") {
-    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "kuma-cli-nodejs", "config.json");
+    return path.join(
+      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
+      "kuma-cli-nodejs",
+      "config.json",
+    );
   }
   // Linux and others: XDG
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), "kuma-cli-nodejs", "config.json");
+  return path.join(
+    process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"),
+    "kuma-cli-nodejs",
+    "config.json",
+  );
 }
 
 /**
@@ -64,7 +75,7 @@ function getOldConfigFilePath(): string {
  */
 export function migrateConfigPath(
   oldContent: string | null,
-  newContent: string | null
+  newContent: string | null,
 ): { source: "old" | "new" | "none"; data: Record<string, unknown> | null } {
   if (newContent !== null) {
     try {
@@ -114,9 +125,15 @@ export function deriveInstanceName(url: string): string {
     if (parsed.port) {
       name += `-${parsed.port}`;
     }
-    return name.replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    return name
+      .replace(/[^a-zA-Z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   } catch {
-    return url.replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    return url
+      .replace(/[^a-zA-Z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   }
 }
 

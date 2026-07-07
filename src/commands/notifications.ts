@@ -57,7 +57,7 @@ ${chalk.dim("Subcommands:")}
   ${chalk.cyan("notifications delete <id>")}              Delete a notification channel
 
 ${chalk.dim("Run")} ${chalk.cyan("kuma notifications <subcommand> --help")} ${chalk.dim("for examples.")}
-`
+`,
     );
 
   // ── LIST ────────────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma notifications list")}
   ${chalk.cyan("kuma notifications list --json")}
   ${chalk.cyan("kuma notifications list --json | jq '.data[] | {id, name}'")}
-`
+`,
     )
     .action(async (opts: { json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);
@@ -133,16 +133,32 @@ ${chalk.dim("Examples:")}
     .requiredOption("--type <type>", "Notification type: discord, telegram, slack, webhook, ...")
     .requiredOption("--name <name>", "Friendly name for this notification channel")
     // Discord
-    .option("--discord-webhook <url|$VAR>", "Discord webhook URL — pass value or env var name like '$DISCORD_WEBHOOK'")
+    .option(
+      "--discord-webhook <url|$VAR>",
+      "Discord webhook URL — pass value or env var name like '$DISCORD_WEBHOOK'",
+    )
     .option("--discord-username <name>", "Discord bot display name (optional)")
     // Telegram
-    .option("--telegram-token <token|$VAR>", "Telegram bot token — pass value or env var name like '$TELEGRAM_TOKEN'")
+    .option(
+      "--telegram-token <token|$VAR>",
+      "Telegram bot token — pass value or env var name like '$TELEGRAM_TOKEN'",
+    )
     .option("--telegram-chat-id <id>", "Telegram chat ID (required for --type telegram)")
     // Slack
-    .option("--slack-webhook <url|$VAR>", "Slack webhook URL — pass value or env var name like '$SLACK_WEBHOOK'")
+    .option(
+      "--slack-webhook <url|$VAR>",
+      "Slack webhook URL — pass value or env var name like '$SLACK_WEBHOOK'",
+    )
     // Generic webhook
-    .option("--webhook-url <url|$VAR>", "Webhook URL — pass value or env var name like '$WEBHOOK_URL'")
-    .option("--webhook-content-type <type>", "Webhook content type (default: application/json)", "application/json")
+    .option(
+      "--webhook-url <url|$VAR>",
+      "Webhook URL — pass value or env var name like '$WEBHOOK_URL'",
+    )
+    .option(
+      "--webhook-content-type <type>",
+      "Webhook content type (default: application/json)",
+      "application/json",
+    )
     // Common flags
     .option("--default", "Enable this notification by default on all new monitors")
     .option("--apply-existing", "Apply this notification to all existing monitors immediately")
@@ -164,98 +180,122 @@ ${chalk.dim("⚠️  Security: never pass secrets as literal flag values — use
 ${chalk.dim("Supported types:")}
   discord, telegram, slack, webhook, gotify, ntfy, pushover, matrix, mattermost, teams ...
   (full list at https://uptime.kuma.pet/docs)
-`
+`,
     )
-    .action(async (opts: {
-      type: string;
-      name: string;
-      discordWebhook?: string;
-      discordUsername?: string;
-      telegramToken?: string;
-      telegramChatId?: string;
-      slackWebhook?: string;
-      webhookUrl?: string;
-      webhookContentType?: string;
-      default?: boolean;
-      applyExisting?: boolean;
-      json?: boolean;
-      instance?: string;
-    }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (opts: {
+        type: string;
+        name: string;
+        discordWebhook?: string;
+        discordUsername?: string;
+        telegramToken?: string;
+        telegramChatId?: string;
+        slackWebhook?: string;
+        webhookUrl?: string;
+        webhookContentType?: string;
+        default?: boolean;
+        applyExisting?: boolean;
+        json?: boolean;
+        instance?: string;
+      }) => {
+        const json = isJsonMode(opts);
 
-      // Build the notification payload
-      const payload: NotificationPayload = {
-        name: opts.name,
-        type: opts.type,
-        isDefault: opts.default ?? false,
-        active: true,
-        applyExisting: opts.applyExisting ?? false,
-      };
+        // Build the notification payload
+        const payload: NotificationPayload = {
+          name: opts.name,
+          type: opts.type,
+          isDefault: opts.default ?? false,
+          active: true,
+          applyExisting: opts.applyExisting ?? false,
+        };
 
-      // Attach provider-specific fields
-      // Fix #1: resolve env var references for all secret/credential flags
-      const discordWebhook = resolveSecret(opts.discordWebhook);
-      const telegramToken = resolveSecret(opts.telegramToken);
-      const slackWebhook = resolveSecret(opts.slackWebhook);
-      const webhookUrl = resolveSecret(opts.webhookUrl);
+        // Attach provider-specific fields
+        // Fix #1: resolve env var references for all secret/credential flags
+        const discordWebhook = resolveSecret(opts.discordWebhook);
+        const telegramToken = resolveSecret(opts.telegramToken);
+        const slackWebhook = resolveSecret(opts.slackWebhook);
+        const webhookUrl = resolveSecret(opts.webhookUrl);
 
-      switch (opts.type.toLowerCase()) {
-        case "discord":
-          if (!discordWebhook) {
-            handleError(new Error("--discord-webhook is required for --type discord (pass value or '$ENV_VAR_NAME')"), opts);
-          }
-          payload.discordWebhookUrl = discordWebhook;
-          if (opts.discordUsername) payload.discordUsername = opts.discordUsername;
-          break;
+        switch (opts.type.toLowerCase()) {
+          case "discord":
+            if (!discordWebhook) {
+              handleError(
+                new Error(
+                  "--discord-webhook is required for --type discord (pass value or '$ENV_VAR_NAME')",
+                ),
+                opts,
+              );
+            }
+            payload.discordWebhookUrl = discordWebhook;
+            if (opts.discordUsername) payload.discordUsername = opts.discordUsername;
+            break;
 
-        case "telegram":
-          if (!telegramToken || !opts.telegramChatId) {
-            handleError(new Error("--telegram-token and --telegram-chat-id are required for --type telegram"), opts);
-          }
-          payload.telegramBotToken = telegramToken;
-          payload.telegramChatID = opts.telegramChatId;
-          break;
+          case "telegram":
+            if (!telegramToken || !opts.telegramChatId) {
+              handleError(
+                new Error(
+                  "--telegram-token and --telegram-chat-id are required for --type telegram",
+                ),
+                opts,
+              );
+            }
+            payload.telegramBotToken = telegramToken;
+            payload.telegramChatID = opts.telegramChatId;
+            break;
 
-        case "slack":
-          if (!slackWebhook) {
-            handleError(new Error("--slack-webhook is required for --type slack (pass value or '$ENV_VAR_NAME')"), opts);
-          }
-          payload.slackwebhookURL = slackWebhook;
-          break;
+          case "slack":
+            if (!slackWebhook) {
+              handleError(
+                new Error(
+                  "--slack-webhook is required for --type slack (pass value or '$ENV_VAR_NAME')",
+                ),
+                opts,
+              );
+            }
+            payload.slackwebhookURL = slackWebhook;
+            break;
 
-        case "webhook":
-          if (!webhookUrl) {
-            handleError(new Error("--webhook-url is required for --type webhook (pass value or '$ENV_VAR_NAME')"), opts);
-          }
-          payload.webhookURL = webhookUrl;
-          payload.webhookContentType = opts.webhookContentType ?? "application/json";
-          break;
+          case "webhook":
+            if (!webhookUrl) {
+              handleError(
+                new Error(
+                  "--webhook-url is required for --type webhook (pass value or '$ENV_VAR_NAME')",
+                ),
+                opts,
+              );
+            }
+            payload.webhookURL = webhookUrl;
+            payload.webhookContentType = opts.webhookContentType ?? "application/json";
+            break;
 
-        default:
-          // For other types (ntfy, gotify, etc.), the user can pass any field
-          // via env vars or future --extra flags. We ship the payload as-is.
-          if (!json) {
-            console.log(chalk.yellow(
-              `⚠️  Type "${opts.type}" may require additional fields not exposed as flags.\n` +
-              `   The notification will be created but may need manual config in the UI.`
-            ));
-          }
-      }
-
-      try {
-        const { client } = await resolveClient(opts);
-        const id = await client.addNotification(payload);
-        client.disconnect();
-
-        if (json) {
-          jsonOut({ id, name: opts.name, type: opts.type });
+          default:
+            // For other types (ntfy, gotify, etc.), the user can pass any field
+            // via env vars or future --extra flags. We ship the payload as-is.
+            if (!json) {
+              console.log(
+                chalk.yellow(
+                  `⚠️  Type "${opts.type}" may require additional fields not exposed as flags.\n` +
+                    `   The notification will be created but may need manual config in the UI.`,
+                ),
+              );
+            }
         }
 
-        success(`Notification "${opts.name}" created (ID: ${id})`);
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+        try {
+          const { client } = await resolveClient(opts);
+          const id = await client.addNotification(payload);
+          client.disconnect();
+
+          if (json) {
+            jsonOut({ id, name: opts.name, type: opts.type });
+          }
+
+          success(`Notification "${opts.name}" created (ID: ${id})`);
+        } catch (err) {
+          handleError(err, opts);
+        }
+      },
+    );
 
   // ── DELETE ──────────────────────────────────────────────────────────────────
   notifications
@@ -271,14 +311,17 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma notifications delete 3")}
   ${chalk.cyan("kuma notifications delete 3 --force")}
   ${chalk.cyan("kuma notifications delete 3 --json")}
-`
+`,
     )
     .action(async (id: string, opts: { force?: boolean; json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);
       const notifId = parseInt(id, 10);
 
       if (isNaN(notifId) || notifId <= 0) {
-        handleError(new Error(`Invalid notification ID: "${id}". Must be a positive integer.`), opts);
+        handleError(
+          new Error(`Invalid notification ID: "${id}". Must be a positive integer.`),
+          opts,
+        );
       }
 
       if (!opts.force && !json) {

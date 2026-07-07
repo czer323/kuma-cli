@@ -86,7 +86,10 @@ export function MonitorTable({
       </Box>
 
       {hasScrollUp && (
-        <Text dimColor>  {"\u25b2"} {scrollOffset} more above</Text>
+        <Text dimColor>
+          {" "}
+          {"\u25b2"} {scrollOffset} more above
+        </Text>
       )}
 
       {visibleMonitors.map((m, vi) => {
@@ -126,9 +129,7 @@ export function MonitorTable({
               <Text dimColor>{pad(m.type, COL_TYPE)}</Text>
               {showUrl && <Text dimColor>{pad(m.url, COL_URL)}</Text>}
               <Text color={uptimeColor}>{pad(m.uptime, COL_UPTIME)}</Text>
-              {showPing && (
-                <Text color={pingColor}>{pad(m.ping, COL_PING)}</Text>
-              )}
+              {showPing && <Text color={pingColor}>{pad(m.ping, COL_PING)}</Text>}
               {showChecked && <Text dimColor>{pad(m.lastChecked, COL_CHECKED)}</Text>}
             </Text>
           </Box>
@@ -136,7 +137,10 @@ export function MonitorTable({
       })}
 
       {hasScrollDown && (
-        <Text dimColor>  {"\u25bc"} {monitors.length - scrollOffset - maxVisible} more below</Text>
+        <Text dimColor>
+          {" "}
+          {"\u25bc"} {monitors.length - scrollOffset - maxVisible} more below
+        </Text>
       )}
     </Box>
   );

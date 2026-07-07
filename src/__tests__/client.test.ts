@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vite-plus/test";
+import type { Mock } from "vite-plus/test";
 
 // Hoist mock factories before any imports
 const { mockEmit, mockOn, mockOnce, mockDisconnect, mockIo } = vi.hoisted(() => ({
@@ -64,7 +64,11 @@ describe("getImportantHeartbeatCount", () => {
   function setupEmit(result: { ok: boolean; count?: number; msg?: string }) {
     mockEmit.mockImplementation((event: string, ...args: unknown[]) => {
       if (event === "monitorImportantHeartbeatListCount") {
-        const cb = args[args.length - 1] as (r: { ok: boolean; count?: number; msg?: string }) => void;
+        const cb = args[args.length - 1] as (r: {
+          ok: boolean;
+          count?: number;
+          msg?: string;
+        }) => void;
         cb(result);
       }
     });
@@ -82,7 +86,7 @@ describe("getImportantHeartbeatCount", () => {
     const client = new KumaClient("http://dummy:3000");
     const count = await client.getImportantHeartbeatCount();
     const emitCall = mockEmit.mock.calls.find(
-      (c: unknown[]) => c[0] === "monitorImportantHeartbeatListCount"
+      (c: unknown[]) => c[0] === "monitorImportantHeartbeatListCount",
     );
     expect(emitCall).toBeDefined();
     expect((emitCall as unknown[])[1]).toBeNull();
@@ -106,7 +110,11 @@ describe("getImportantHeartbeatListPaged", () => {
   function setupEmit(result: { ok: boolean; data?: unknown[]; msg?: string }) {
     mockEmit.mockImplementation((event: string, ...args: unknown[]) => {
       if (event === "monitorImportantHeartbeatListPaged") {
-        const cb = args[args.length - 1] as (r: { ok: boolean; data?: unknown[]; msg?: string }) => void;
+        const cb = args[args.length - 1] as (r: {
+          ok: boolean;
+          data?: unknown[];
+          msg?: string;
+        }) => void;
         cb(result);
       }
     });
@@ -127,7 +135,9 @@ describe("getImportantHeartbeatListPaged", () => {
   it("rejects when result.ok is false", async () => {
     setupEmit({ ok: false, msg: "Invalid monitor" });
     const client = new KumaClient("http://dummy:3000");
-    await expect(client.getImportantHeartbeatListPaged(1, 0, 20)).rejects.toThrow("Invalid monitor");
+    await expect(client.getImportantHeartbeatListPaged(1, 0, 20)).rejects.toThrow(
+      "Invalid monitor",
+    );
   });
 
   it("resolves empty array when result.data is undefined", async () => {

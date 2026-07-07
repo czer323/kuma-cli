@@ -15,7 +15,15 @@ import { useCommand } from "./commands/use.js";
 import { clusterCommand } from "./commands/cluster.js";
 import { eventsCommand } from "./commands/events.js";
 import { launchDashboard } from "./commands/dashboard.js";
-import { getConfig, getConfigPath, getAllInstances, getAllClusters, getActiveContext, getInstanceConfig, getInstanceCluster } from "./config.js";
+import {
+  getConfig,
+  getConfigPath,
+  getAllInstances,
+  getAllClusters,
+  getActiveContext,
+  getInstanceConfig,
+  getInstanceCluster,
+} from "./config.js";
 import chalk from "chalk";
 import { isJsonMode, jsonOut } from "./utils/output.js";
 
@@ -33,7 +41,7 @@ program
     `
 ${chalk.bold.cyan("Uptime Kuma CLI")} — terminal control for your monitoring stack
 
-`
+`,
   )
   .addHelpText(
     "after",
@@ -41,7 +49,7 @@ ${chalk.bold.cyan("Uptime Kuma CLI")} — terminal control for your monitoring s
 ${chalk.bold("Quick Start:")}
   ${chalk.cyan("kuma login https://kuma.example.com")}   Authenticate (saves session)
   ${chalk.cyan("kuma monitors list")}                    List all monitors + status
-  ${chalk.cyan("kuma monitors add --name \"My API\" --type http --url https://api.example.com")}
+  ${chalk.cyan('kuma monitors add --name "My API" --type http --url https://api.example.com')}
   ${chalk.cyan("kuma heartbeat view 42")}                View recent heartbeats for monitor 42
   ${chalk.cyan("kuma logout")}                           Clear saved session
 
@@ -72,7 +80,7 @@ ${chalk.bold("Clusters:")}
   ${chalk.cyan("kuma monitors list --instance server2")}     Target a specific instance
 
 ${chalk.dim("Config stored at:")} ${chalk.yellow(getConfigPath())}
-`
+`,
   );
 
 // ── Status ────────────────────────────────────────────────────────────────────
@@ -86,7 +94,7 @@ program
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma status")}              Check if you are logged in
   ${chalk.cyan("kuma status --json")}       Machine-readable login state
-`
+`,
   )
   .action((opts: { json?: boolean }) => {
     const json = isJsonMode(opts);
@@ -130,7 +138,10 @@ ${chalk.dim("Examples:")}
       if (cluster) {
         const primaryInst = getInstanceConfig(cluster.primary);
         const primaryUrl = primaryInst ? ` (${chalk.cyan(primaryInst.url)})` : "";
-        console.log(chalk.green(`Active: cluster '${active.name}'`) + ` primary: ${cluster.primary}${primaryUrl}`);
+        console.log(
+          chalk.green(`Active: cluster '${active.name}'`) +
+            ` primary: ${cluster.primary}${primaryUrl}`,
+        );
       } else {
         console.log(chalk.yellow(`Active cluster '${active.name}' not found in config.`));
       }
@@ -165,7 +176,13 @@ eventsCommand(program);
 const args = process.argv.slice(2);
 const hasSubcommand = args.length > 0 && !args[0].startsWith("-");
 
-if (!hasSubcommand && !args.includes("-h") && !args.includes("--help") && !args.includes("-V") && !args.includes("--version")) {
+if (
+  !hasSubcommand &&
+  !args.includes("-h") &&
+  !args.includes("--help") &&
+  !args.includes("-V") &&
+  !args.includes("--version")
+) {
   // Launch dashboard directly — supports --instance, --cluster, --refresh as top-level flags
   launchDashboard({
     instance: undefined,

@@ -63,7 +63,7 @@ ${chalk.dim("Subcommands:")}
   ${chalk.cyan("monitors resume <id>")}   Resume checks for a paused monitor
 
 ${chalk.dim("Run")} ${chalk.cyan("kuma monitors <subcommand> --help")} ${chalk.dim("for per-command examples.")}
-`
+`,
     );
 
   // LIST
@@ -71,15 +71,18 @@ ${chalk.dim("Run")} ${chalk.cyan("kuma monitors <subcommand> --help")} ${chalk.d
     .command("list")
     .description("List all monitors with live status, uptime, and ping")
     .option("--json", "Output as JSON ({ ok, data })")
-    .option(
-      "--status <status>",
-      "Filter to a specific status: up, down, pending, maintenance"
-    )
+    .option("--status <status>", "Filter to a specific status: up, down, pending, maintenance")
     .option("--tag <tag>", "Filter to monitors that have this tag name")
-    .option("--has-notification", "Filter to monitors that have at least one notification configured")
+    .option(
+      "--has-notification",
+      "Filter to monitors that have at least one notification configured",
+    )
     .option("--without-notification", "Filter to monitors that have no notifications configured")
     .option("--search <query>", "Filter by monitor name or URL/hostname (case-insensitive)")
-    .option("--uptime-below <percent>", "Filter to monitors with 24h uptime below this percentage (e.g. 99.9)")
+    .option(
+      "--uptime-below <percent>",
+      "Filter to monitors with 24h uptime below this percentage (e.g. 99.9)",
+    )
     .option("--include-notifications", "Include notification channels in the JSON output")
     .option("--instance <name>", "Target a specific instance")
     .option("--cluster <name>", "Show a unified view across all instances in a named cluster")
@@ -93,7 +96,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors list --without-notification")} Audit monitors missing alerts
   ${chalk.cyan("kuma monitors list --uptime-below 99.0")}    Find SLA-breaching monitors
   ${chalk.cyan("kuma monitors list --json | jq '.data[].name'")}
-`
+`,
     )
     .action(
       async (opts: {
@@ -137,11 +140,12 @@ ${chalk.dim("Examples:")}
               } catch {
                 return [];
               }
-            })
+            }),
           );
 
           for (const r of results) {
-            if (r.status === "fulfilled") allMonitors.push(...(r.value as (Monitor & { _instance: string })[]));
+            if (r.status === "fulfilled")
+              allMonitors.push(...(r.value as (Monitor & { _instance: string })[]));
           }
 
           // Deduplicate: worst-status-wins
@@ -188,8 +192,8 @@ ${chalk.dim("Examples:")}
             const status = m.heartbeat
               ? statusLabel(m.heartbeat.status)
               : m.active
-              ? statusLabel(2)
-              : "\u23F8 Paused";
+                ? statusLabel(2)
+                : "\u23F8 Paused";
             table.push([
               String(m.id),
               m.name,
@@ -201,17 +205,21 @@ ${chalk.dim("Examples:")}
             ]);
           }
 
-          info(`Cluster '${opts.cluster}' \u2014 unified view (${clusterMonitors.length} monitors, worst-status-wins)\n`);
+          info(
+            `Cluster '${opts.cluster}' \u2014 unified view (${clusterMonitors.length} monitors, worst-status-wins)\n`,
+          );
           console.log(table.toString());
           console.log(`\n${clusterMonitors.length} monitor(s) total`);
           return;
         }
 
-
         const json = isJsonMode(opts);
 
         if (opts.hasNotification && opts.withoutNotification) {
-          handleError(new Error("Cannot use both --has-notification and --without-notification"), opts);
+          handleError(
+            new Error("Cannot use both --has-notification and --without-notification"),
+            opts,
+          );
         }
 
         const uptimeThreshold = opts.uptimeBelow ? parseFloat(opts.uptimeBelow) : undefined;
@@ -239,10 +247,12 @@ ${chalk.dim("Examples:")}
             const statusKey = opts.status.toLowerCase();
             if (!(statusKey in STATUS_MAP)) {
               if (json) {
-                jsonOut({ error: `Invalid status "${opts.status}". Valid values: up, down, pending, maintenance` });
+                jsonOut({
+                  error: `Invalid status "${opts.status}". Valid values: up, down, pending, maintenance`,
+                });
               }
               error(
-                `Invalid status "${opts.status}". Valid values: up, down, pending, maintenance`
+                `Invalid status "${opts.status}". Valid values: up, down, pending, maintenance`,
               );
               process.exit(1);
             }
@@ -259,8 +269,7 @@ ${chalk.dim("Examples:")}
             const tagName = opts.tag.toLowerCase();
             list = list.filter(
               (m: Monitor) =>
-                Array.isArray(m.tags) &&
-                m.tags.some((t) => t.name.toLowerCase() === tagName)
+                Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName),
             );
           }
 
@@ -321,13 +330,12 @@ ${chalk.dim("Examples:")}
           ]);
 
           list.forEach((m: Monitor) => {
-            const target =
-              m.url ?? (m.hostname ? `${m.hostname}:${m.port}` : "—");
+            const target = m.url ?? (m.hostname ? `${m.hostname}:${m.port}` : "—");
             const status = m.heartbeat
               ? statusLabel(m.heartbeat.status)
               : m.active
-              ? statusLabel(2)
-              : "⏸ Paused";
+                ? statusLabel(2)
+                : "⏸ Paused";
             table.push([
               String(m.id),
               m.name,
@@ -344,7 +352,7 @@ ${chalk.dim("Examples:")}
         } catch (err) {
           handleError(err, opts);
         }
-      }
+      },
     );
 
   // ADD
@@ -364,10 +372,10 @@ ${chalk.dim("Examples:")}
       `
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors add")}                                          Interactive mode
-  ${chalk.cyan("kuma monitors add --name \"My API\" --type http --url https://api.example.com")}
-  ${chalk.cyan("kuma monitors add --name \"DB\" --type tcp --url db.host:5432 --interval 30")}
-  ${chalk.cyan("kuma monitors add --name \"Ping\" --type ping --url 8.8.8.8 --json")}
-`
+  ${chalk.cyan('kuma monitors add --name "My API" --type http --url https://api.example.com')}
+  ${chalk.cyan('kuma monitors add --name "DB" --type tcp --url db.host:5432 --interval 30')}
+  ${chalk.cyan('kuma monitors add --name "Ping" --type ping --url 8.8.8.8 --json')}
+`,
     )
     .action(
       async (opts: {
@@ -384,9 +392,7 @@ ${chalk.dim("Examples:")}
 
         try {
           const answers = await prompt([
-            ...(!opts.name
-              ? [{ type: "input", name: "name", message: "Monitor name:" }]
-              : []),
+            ...(!opts.name ? [{ type: "input", name: "name", message: "Monitor name:" }] : []),
             ...(!opts.type
               ? [
                   {
@@ -415,13 +421,13 @@ ${chalk.dim("Examples:")}
           const interval = parseInt(opts.interval ?? "60", 10);
 
           const { client } = await resolveClient(opts);
-          const result = await client.addMonitor({ 
-            name, 
-            type, 
-            url, 
-            interval, 
+          const result = await client.addMonitor({
+            name,
+            type,
+            url,
+            interval,
             keyword: opts.keyword,
-            parent: opts.parent ? parseInt(opts.parent, 10) : undefined 
+            parent: opts.parent ? parseInt(opts.parent, 10) : undefined,
           });
 
           if (json) {
@@ -433,7 +439,7 @@ ${chalk.dim("Examples:")}
         } catch (err) {
           handleError(err, opts);
         }
-      }
+      },
     );
   // CREATE (non-interactive, with tag support — for CI/CD pipelines)
   monitors
@@ -443,8 +449,18 @@ ${chalk.dim("Examples:")}
     .requiredOption("--type <type>", "Monitor type: http, tcp, ping, dns, push, ...")
     .option("--url <url>", "URL or hostname to monitor")
     .option("--interval <seconds>", "Check interval in seconds (default: 60)", "60")
-    .option("--tag <tag>", "Assign a tag by name (repeatable — must already exist in Kuma)", collect, [])
-    .option("--notification-id <id>", "Assign a notification channel by ID (repeatable)", collectInt, [])
+    .option(
+      "--tag <tag>",
+      "Assign a tag by name (repeatable — must already exist in Kuma)",
+      collect,
+      [],
+    )
+    .option(
+      "--notification-id <id>",
+      "Assign a notification channel by ID (repeatable)",
+      collectInt,
+      [],
+    )
     .option("--json", "Output as JSON ({ ok, data }) — prints monitor ID and pushToken to stdout")
     .option("--instance <name>", "Target a specific instance")
     .option("--parent <id>", "Create as a child monitor under an existing group monitor (ID)")
@@ -453,119 +469,121 @@ ${chalk.dim("Examples:")}
       "after",
       `
 ${chalk.dim("Examples:")}
-  ${chalk.cyan("kuma monitors create --type http --name \"habitu.ar\" --url https://habitu.ar")}
-  ${chalk.cyan("kuma monitors create --type http --name \"My API\" --url https://api.example.com --tag Production --tag BlackAsteroid")}
+  ${chalk.cyan('kuma monitors create --type http --name "habitu.ar" --url https://habitu.ar')}
+  ${chalk.cyan('kuma monitors create --type http --name "My API" --url https://api.example.com --tag Production --tag BlackAsteroid')}
   ${chalk.cyan("kuma monitors create --type push --name \"GH Runner\" --json | jq '.data.pushToken'")}
-  ${chalk.cyan("kuma monitors create --type tcp --name \"DB\" --url db.host:5432 --interval 30 --notification-id 1")}
+  ${chalk.cyan('kuma monitors create --type tcp --name "DB" --url db.host:5432 --interval 30 --notification-id 1')}
 
 ${chalk.dim("Full pipeline (deploy → monitor → heartbeat):")}
-  ${chalk.cyan("RESULT=\$(kuma monitors create --type push --name \"runner\" --json)")}
+  ${chalk.cyan('RESULT=\$(kuma monitors create --type push --name "runner" --json)')}
   ${chalk.cyan("PUSH_TOKEN=\$(echo \$RESULT | jq -r '.data.pushToken')")}
-  ${chalk.cyan("kuma heartbeat send \$PUSH_TOKEN --msg \"Alive\"")}
-`
+  ${chalk.cyan('kuma heartbeat send \$PUSH_TOKEN --msg "Alive"')}
+`,
     )
-    .action(async (opts: {
-      name: string;
-      type: string;
-      url?: string;
-      keyword?: string;
-      interval?: string;
-      tag: string[];
-      notificationId: number[];
-      json?: boolean;
-      instance?: string;
-      parent?: string;
-    }) => {
-      const json = isJsonMode(opts);
-      const interval = parseInt(opts.interval ?? "60", 10);
+    .action(
+      async (opts: {
+        name: string;
+        type: string;
+        url?: string;
+        keyword?: string;
+        interval?: string;
+        tag: string[];
+        notificationId: number[];
+        json?: boolean;
+        instance?: string;
+        parent?: string;
+      }) => {
+        const json = isJsonMode(opts);
+        const interval = parseInt(opts.interval ?? "60", 10);
 
-      // Validate required fields per type
-      if (["http", "keyword", "tcp", "ping", "dns"].includes(opts.type) && !opts.url) {
-        handleError(new Error(`--url is required for monitor type "${opts.type}"`), opts);
-      }
-
-      try {
-        const { client, instanceName } = await resolveClient(opts);
-
-        // Create the monitor
-        const result = await client.addMonitor({
-          name: opts.name,
-          type: opts.type,
-          url: opts.url,
-          interval,
-          keyword: opts.keyword,
-          parent: opts.parent ? parseInt(opts.parent, 10) : undefined,
-        });
-        const monitorId = result.id;
-        // pushToken is returned directly from addMonitor for push monitors
-        // (auto-generated in the client before sending to Kuma)
-        let pushToken: string | null = result.pushToken ?? null;
-
-        // BUG-02 fix: track tag warnings explicitly so JSON consumers can see them
-        const tagWarnings: string[] = [];
-
-        // Assign tags if specified
-        if (opts.tag.length > 0) {
-          const allTags = await client.getTags();
-          const tagMap = new Map(allTags.map((t) => [t.name.toLowerCase(), t]));
-
-          for (const tagName of opts.tag) {
-            const found = tagMap.get(tagName.toLowerCase());
-            if (!found) {
-              const warn = `Tag "${tagName}" not found — skipping. Create it in the Kuma UI first.`;
-              tagWarnings.push(warn);
-              if (!json) {
-                console.warn(chalk.yellow(`⚠️  ${warn}`));
-              }
-              continue;
-            }
-            await client.addMonitorTag(found.id, monitorId);
-          }
+        // Validate required fields per type
+        if (["http", "keyword", "tcp", "ping", "dns"].includes(opts.type) && !opts.url) {
+          handleError(new Error(`--url is required for monitor type "${opts.type}"`), opts);
         }
 
-        // Assign notifications if specified
-        if (opts.notificationId.length > 0) {
-          const monitorMap = await client.getMonitorList();
-          for (const notifId of opts.notificationId) {
-            await client.setMonitorNotification(monitorId, notifId, true, monitorMap);
-          }
-        }
+        try {
+          const { client, instanceName } = await resolveClient(opts);
 
-        client.disconnect();
-
-        if (json) {
-          const data: Record<string, unknown> = {
-            id: monitorId,
+          // Create the monitor
+          const result = await client.addMonitor({
             name: opts.name,
             type: opts.type,
-            url: opts.url ?? null,
-            keyword: opts.keyword,
+            url: opts.url,
             interval,
-          };
-          if (pushToken) data.pushToken = pushToken;
-          if (tagWarnings.length > 0) data.warnings = tagWarnings;
-          // BUG-02: exit 1 when warnings exist so pipelines can detect the issue
-          jsonOut(data, tagWarnings.length > 0 ? 1 : 0);
-        }
+            keyword: opts.keyword,
+            parent: opts.parent ? parseInt(opts.parent, 10) : undefined,
+          });
+          const monitorId = result.id;
+          // pushToken is returned directly from addMonitor for push monitors
+          // (auto-generated in the client before sending to Kuma)
+          let pushToken: string | null = result.pushToken ?? null;
 
-        success(`Monitor "${opts.name}" created (ID: ${monitorId})`);
-        if (pushToken) {
-          const instanceUrl = getInstanceConfig(instanceName)?.url ?? "";
-          console.log(`   Push token: ${chalk.cyan(pushToken)}`);
-          console.log(`   Push URL:   ${chalk.dim(`${instanceUrl}/api/push/${pushToken}`)}`);
+          // BUG-02 fix: track tag warnings explicitly so JSON consumers can see them
+          const tagWarnings: string[] = [];
+
+          // Assign tags if specified
+          if (opts.tag.length > 0) {
+            const allTags = await client.getTags();
+            const tagMap = new Map(allTags.map((t) => [t.name.toLowerCase(), t]));
+
+            for (const tagName of opts.tag) {
+              const found = tagMap.get(tagName.toLowerCase());
+              if (!found) {
+                const warn = `Tag "${tagName}" not found — skipping. Create it in the Kuma UI first.`;
+                tagWarnings.push(warn);
+                if (!json) {
+                  console.warn(chalk.yellow(`⚠️  ${warn}`));
+                }
+                continue;
+              }
+              await client.addMonitorTag(found.id, monitorId);
+            }
+          }
+
+          // Assign notifications if specified
+          if (opts.notificationId.length > 0) {
+            const monitorMap = await client.getMonitorList();
+            for (const notifId of opts.notificationId) {
+              await client.setMonitorNotification(monitorId, notifId, true, monitorMap);
+            }
+          }
+
+          client.disconnect();
+
+          if (json) {
+            const data: Record<string, unknown> = {
+              id: monitorId,
+              name: opts.name,
+              type: opts.type,
+              url: opts.url ?? null,
+              keyword: opts.keyword,
+              interval,
+            };
+            if (pushToken) data.pushToken = pushToken;
+            if (tagWarnings.length > 0) data.warnings = tagWarnings;
+            // BUG-02: exit 1 when warnings exist so pipelines can detect the issue
+            jsonOut(data, tagWarnings.length > 0 ? 1 : 0);
+          }
+
+          success(`Monitor "${opts.name}" created (ID: ${monitorId})`);
+          if (pushToken) {
+            const instanceUrl = getInstanceConfig(instanceName)?.url ?? "";
+            console.log(`   Push token: ${chalk.cyan(pushToken)}`);
+            console.log(`   Push URL:   ${chalk.dim(`${instanceUrl}/api/push/${pushToken}`)}`);
+          }
+          if (opts.tag.length > 0) {
+            const applied = opts.tag.filter((t) => !tagWarnings.some((w) => w.includes(t)));
+            if (applied.length > 0) console.log(`   Tags: ${applied.join(", ")}`);
+          }
+          // BUG-02: exit 1 if any tags were not found — makes pipeline failures visible
+          if (tagWarnings.length > 0) {
+            process.exit(1);
+          }
+        } catch (err) {
+          handleError(err, opts);
         }
-        if (opts.tag.length > 0) {
-          const applied = opts.tag.filter((t) => !tagWarnings.some((w) => w.includes(t)));
-          if (applied.length > 0) console.log(`   Tags: ${applied.join(", ")}`);
-        }
-        // BUG-02: exit 1 if any tags were not found — makes pipeline failures visible
-        if (tagWarnings.length > 0) {
-          process.exit(1);
-        }
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+      },
+    );
 
   // UPDATE
   monitors
@@ -582,12 +600,12 @@ ${chalk.dim("Full pipeline (deploy → monitor → heartbeat):")}
       "after",
       `
 ${chalk.dim("Examples:")}
-  ${chalk.cyan("kuma monitors update 42 --name \"Prod API\"")}
+  ${chalk.cyan('kuma monitors update 42 --name "Prod API"')}
   ${chalk.cyan("kuma monitors update 42 --url https://new-url.com --interval 30")}
   ${chalk.cyan("kuma monitors update 42 --no-active")}          Pause the monitor
   ${chalk.cyan("kuma monitors update 42 --active")}             Resume the monitor
-  ${chalk.cyan("kuma monitors update 42 --name \"New\" --json")}
-`
+  ${chalk.cyan('kuma monitors update 42 --name "New" --json')}
+`,
     )
     .action(
       async (
@@ -599,7 +617,7 @@ ${chalk.dim("Examples:")}
           active?: boolean;
           json?: boolean;
           instance?: string;
-        }
+        },
       ) => {
         const json = isJsonMode(opts);
         const monitorId = parseInt(id, 10);
@@ -615,8 +633,10 @@ ${chalk.dim("Examples:")}
 
         if (!hasPatch) {
           handleError(
-            new Error("No fields to update. Use --name, --url, --interval, --active, or --no-active."),
-            opts
+            new Error(
+              "No fields to update. Use --name, --url, --interval, --active, or --no-active.",
+            ),
+            opts,
           );
         }
 
@@ -631,16 +651,14 @@ ${chalk.dim("Examples:")}
             const ids = Object.keys(monitorMap).join(", ");
             handleError(
               new Error(`Monitor ${monitorId} not found. Available IDs: ${ids || "none"}`),
-              opts
+              opts,
             );
           }
 
           const changes: string[] = [];
 
           const hasFieldChanges =
-            opts.name !== undefined ||
-            opts.url !== undefined ||
-            opts.interval !== undefined;
+            opts.name !== undefined || opts.url !== undefined || opts.interval !== undefined;
 
           if (hasFieldChanges) {
             const updated: Monitor = { ...existing };
@@ -679,7 +697,7 @@ ${chalk.dim("Examples:")}
         } catch (err) {
           handleError(err, opts);
         }
-      }
+      },
     );
 
   // DELETE
@@ -698,7 +716,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors delete 42 --json")}       Non-interactive JSON output
 
 ${chalk.dim("Note:")} This action is irreversible. All heartbeat history is deleted.
-`
+`,
     )
     .action(async (id: string, opts: { force?: boolean; json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);
@@ -744,7 +762,7 @@ ${chalk.dim("Note:")} This action is irreversible. All heartbeat history is dele
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors pause 42")}
   ${chalk.cyan("kuma monitors pause 42 --json")}
-`
+`,
     )
     .action(async (id: string, opts: { json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);
@@ -776,7 +794,7 @@ ${chalk.dim("Examples:")}
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors resume 42")}
   ${chalk.cyan("kuma monitors resume 42 --json")}
-`
+`,
     )
     .action(async (id: string, opts: { json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);
@@ -801,7 +819,10 @@ ${chalk.dim("Examples:")}
     .command("bulk-pause")
     .description("Pause all monitors matching a tag or status filter")
     .option("--tag <tag>", "Pause all monitors with this tag")
-    .option("--status <status>", "Pause all monitors with this status: up, down, pending, maintenance")
+    .option(
+      "--status <status>",
+      "Pause all monitors with this status: up, down, pending, maintenance",
+    )
     .option("--dry-run", "Preview which monitors would be paused without pausing them")
     .option("--json", "Output as JSON ({ ok, data })")
     .option("--instance <name>", "Target a specific instance")
@@ -815,79 +836,95 @@ ${chalk.dim("Examples:")}
 
 ${chalk.dim("CI/CD usage:")}
   ${chalk.cyan("kuma monitors bulk-pause --tag Production && ./deploy.sh && kuma monitors bulk-resume --tag Production")}
-`
+`,
     )
-    .action(async (opts: { tag?: string; status?: string; dryRun?: boolean; json?: boolean; instance?: string }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (opts: {
+        tag?: string;
+        status?: string;
+        dryRun?: boolean;
+        json?: boolean;
+        instance?: string;
+      }) => {
+        const json = isJsonMode(opts);
 
-      if (!opts.tag && !opts.status) {
-        handleError(new Error("At least one of --tag or --status is required"), opts);
-      }
-
-      const STATUS_MAP: Record<string, number> = { down: 0, up: 1, pending: 2, maintenance: 3 };
-
-      try {
-        const { client } = await resolveClient(opts);
-        const monitorMap = await client.getMonitorList();
-        const all = Object.values(monitorMap);
-
-        let targets = all;
-        if (opts.tag) {
-          const tagName = opts.tag.toLowerCase();
-          targets = targets.filter((m) =>
-            Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName)
-          );
+        if (!opts.tag && !opts.status) {
+          handleError(new Error("At least one of --tag or --status is required"), opts);
         }
-        if (opts.status) {
-          const statusNum = STATUS_MAP[opts.status.toLowerCase()];
-          if (statusNum === undefined) {
-            client.disconnect();
-            handleError(new Error(`Invalid status "${opts.status}". Valid: up, down, pending, maintenance`), opts);
+
+        const STATUS_MAP: Record<string, number> = { down: 0, up: 1, pending: 2, maintenance: 3 };
+
+        try {
+          const { client } = await resolveClient(opts);
+          const monitorMap = await client.getMonitorList();
+          const all = Object.values(monitorMap);
+
+          let targets = all;
+          if (opts.tag) {
+            const tagName = opts.tag.toLowerCase();
+            targets = targets.filter(
+              (m) => Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName),
+            );
           }
-          targets = targets.filter((m) => m.heartbeat?.status === statusNum);
-        }
+          if (opts.status) {
+            const statusNum = STATUS_MAP[opts.status.toLowerCase()];
+            if (statusNum === undefined) {
+              client.disconnect();
+              handleError(
+                new Error(`Invalid status "${opts.status}". Valid: up, down, pending, maintenance`),
+                opts,
+              );
+            }
+            targets = targets.filter((m) => m.heartbeat?.status === statusNum);
+          }
 
-        if (targets.length === 0) {
+          if (targets.length === 0) {
+            client.disconnect();
+            if (json) jsonOut({ affected: 0, results: [] });
+            console.log("No monitors matched the given filters.");
+            return;
+          }
+
+          if (opts.dryRun) {
+            client.disconnect();
+            const preview = targets.map((m) => ({ id: m.id, name: m.name }));
+            if (json) jsonOut({ dryRun: true, affected: targets.length, monitors: preview });
+            console.log(chalk.yellow(`Dry run — would pause ${targets.length} monitor(s):`));
+            preview.forEach((m) =>
+              console.log(`  ${chalk.dim(String(m.id).padStart(4))} ${m.name}`),
+            );
+            return;
+          }
+
+          const results = await client.bulkPause((m) => targets.some((t) => t.id === m.id));
           client.disconnect();
-          if (json) jsonOut({ affected: 0, results: [] });
-          console.log("No monitors matched the given filters.");
-          return;
+
+          const failed = results.filter((r) => !r.ok);
+
+          if (json) {
+            jsonOut({ affected: results.length, failed: failed.length, results });
+          }
+
+          console.log(`Paused ${results.length - failed.length}/${results.length} monitor(s)`);
+          if (failed.length > 0) {
+            failed.forEach((r) => error(`  Monitor ${r.id} (${r.name}): ${r.error}`));
+            process.exit(1);
+          }
+        } catch (err) {
+          handleError(err, opts);
         }
-
-        if (opts.dryRun) {
-          client.disconnect();
-          const preview = targets.map((m) => ({ id: m.id, name: m.name }));
-          if (json) jsonOut({ dryRun: true, affected: targets.length, monitors: preview });
-          console.log(chalk.yellow(`Dry run — would pause ${targets.length} monitor(s):`));
-          preview.forEach((m) => console.log(`  ${chalk.dim(String(m.id).padStart(4))} ${m.name}`));
-          return;
-        }
-
-        const results = await client.bulkPause((m) => targets.some((t) => t.id === m.id));
-        client.disconnect();
-
-        const failed = results.filter((r) => !r.ok);
-
-        if (json) {
-          jsonOut({ affected: results.length, failed: failed.length, results });
-        }
-
-        console.log(`Paused ${results.length - failed.length}/${results.length} monitor(s)`);
-        if (failed.length > 0) {
-          failed.forEach((r) => error(`  Monitor ${r.id} (${r.name}): ${r.error}`));
-          process.exit(1);
-        }
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+      },
+    );
 
   // BULK-RESUME
   monitors
     .command("bulk-resume")
     .description("Resume all monitors matching a tag or status filter")
     .option("--tag <tag>", "Resume all monitors with this tag")
-    .option("--status <status>", "Resume all monitors with this status: up, down, pending, maintenance")
+    .option(
+      "--status <status>",
+      "Resume all monitors with this status: up, down, pending, maintenance",
+    )
     .option("--dry-run", "Preview which monitors would be resumed without resuming them")
     .option("--json", "Output as JSON ({ ok, data })")
     .option("--instance <name>", "Target a specific instance")
@@ -898,72 +935,85 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma monitors bulk-resume --tag Production")}
   ${chalk.cyan("kuma monitors bulk-resume --tag Production --dry-run")}
   ${chalk.cyan("kuma monitors bulk-resume --tag Production --json")}
-`
+`,
     )
-    .action(async (opts: { tag?: string; status?: string; dryRun?: boolean; json?: boolean; instance?: string }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (opts: {
+        tag?: string;
+        status?: string;
+        dryRun?: boolean;
+        json?: boolean;
+        instance?: string;
+      }) => {
+        const json = isJsonMode(opts);
 
-      if (!opts.tag && !opts.status) {
-        handleError(new Error("At least one of --tag or --status is required"), opts);
-      }
-
-      const STATUS_MAP: Record<string, number> = { down: 0, up: 1, pending: 2, maintenance: 3 };
-
-      try {
-        const { client } = await resolveClient(opts);
-        const monitorMap = await client.getMonitorList();
-        const all = Object.values(monitorMap);
-
-        let targets = all;
-        if (opts.tag) {
-          const tagName = opts.tag.toLowerCase();
-          targets = targets.filter((m) =>
-            Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName)
-          );
+        if (!opts.tag && !opts.status) {
+          handleError(new Error("At least one of --tag or --status is required"), opts);
         }
-        if (opts.status) {
-          const statusNum = STATUS_MAP[opts.status.toLowerCase()];
-          if (statusNum === undefined) {
-            client.disconnect();
-            handleError(new Error(`Invalid status "${opts.status}". Valid: up, down, pending, maintenance`), opts);
+
+        const STATUS_MAP: Record<string, number> = { down: 0, up: 1, pending: 2, maintenance: 3 };
+
+        try {
+          const { client } = await resolveClient(opts);
+          const monitorMap = await client.getMonitorList();
+          const all = Object.values(monitorMap);
+
+          let targets = all;
+          if (opts.tag) {
+            const tagName = opts.tag.toLowerCase();
+            targets = targets.filter(
+              (m) => Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName),
+            );
           }
-          targets = targets.filter((m) => m.heartbeat?.status === statusNum);
-        }
+          if (opts.status) {
+            const statusNum = STATUS_MAP[opts.status.toLowerCase()];
+            if (statusNum === undefined) {
+              client.disconnect();
+              handleError(
+                new Error(`Invalid status "${opts.status}". Valid: up, down, pending, maintenance`),
+                opts,
+              );
+            }
+            targets = targets.filter((m) => m.heartbeat?.status === statusNum);
+          }
 
-        if (targets.length === 0) {
+          if (targets.length === 0) {
+            client.disconnect();
+            if (json) jsonOut({ affected: 0, results: [] });
+            console.log("No monitors matched the given filters.");
+            return;
+          }
+
+          if (opts.dryRun) {
+            client.disconnect();
+            const preview = targets.map((m) => ({ id: m.id, name: m.name }));
+            if (json) jsonOut({ dryRun: true, affected: targets.length, monitors: preview });
+            console.log(chalk.yellow(`Dry run — would resume ${targets.length} monitor(s):`));
+            preview.forEach((m) =>
+              console.log(`  ${chalk.dim(String(m.id).padStart(4))} ${m.name}`),
+            );
+            return;
+          }
+
+          const results = await client.bulkResume((m) => targets.some((t) => t.id === m.id));
           client.disconnect();
-          if (json) jsonOut({ affected: 0, results: [] });
-          console.log("No monitors matched the given filters.");
-          return;
+
+          const failed = results.filter((r) => !r.ok);
+
+          if (json) {
+            jsonOut({ affected: results.length, failed: failed.length, results });
+          }
+
+          console.log(`Resumed ${results.length - failed.length}/${results.length} monitor(s)`);
+          if (failed.length > 0) {
+            failed.forEach((r) => error(`  Monitor ${r.id} (${r.name}): ${r.error}`));
+            process.exit(1);
+          }
+        } catch (err) {
+          handleError(err, opts);
         }
-
-        if (opts.dryRun) {
-          client.disconnect();
-          const preview = targets.map((m) => ({ id: m.id, name: m.name }));
-          if (json) jsonOut({ dryRun: true, affected: targets.length, monitors: preview });
-          console.log(chalk.yellow(`Dry run — would resume ${targets.length} monitor(s):`));
-          preview.forEach((m) => console.log(`  ${chalk.dim(String(m.id).padStart(4))} ${m.name}`));
-          return;
-        }
-
-        const results = await client.bulkResume((m) => targets.some((t) => t.id === m.id));
-        client.disconnect();
-
-        const failed = results.filter((r) => !r.ok);
-
-        if (json) {
-          jsonOut({ affected: results.length, failed: failed.length, results });
-        }
-
-        console.log(`Resumed ${results.length - failed.length}/${results.length} monitor(s)`);
-        if (failed.length > 0) {
-          failed.forEach((r) => error(`  Monitor ${r.id} (${r.name}): ${r.error}`));
-          process.exit(1);
-        }
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+      },
+    );
 
   // SET-NOTIFICATION
   monitors
@@ -983,42 +1033,43 @@ ${chalk.dim("Examples:")}
 
 ${chalk.dim("Bulk assign via pipe:")}
   ${chalk.cyan("kuma monitors list --tag Production --json | jq '.data[].id' | xargs -I{} kuma monitors set-notification {} --notification-id 3")}
-`
+`,
     )
-    .action(async (
-      id: string,
-      opts: { notificationId: string; remove?: boolean; json?: boolean; instance?: string }
-    ) => {
-      const json = isJsonMode(opts);
-      const monitorId = parseInt(id, 10);
-      const notifId = parseInt(opts.notificationId, 10);
+    .action(
+      async (
+        id: string,
+        opts: { notificationId: string; remove?: boolean; json?: boolean; instance?: string },
+      ) => {
+        const json = isJsonMode(opts);
+        const monitorId = parseInt(id, 10);
+        const notifId = parseInt(opts.notificationId, 10);
 
-      if (isNaN(monitorId)) {
-        handleError(new Error(`Invalid monitor ID: ${id}`), opts);
-      }
-      if (isNaN(notifId)) {
-        handleError(new Error(`Invalid notification ID: ${opts.notificationId}`), opts);
-      }
-
-      try {
-        const { client } = await resolveClient(opts);
-        const monitorMap = await client.getMonitorList();
-        await client.setMonitorNotification(
-          monitorId,
-          notifId,
-          !opts.remove,
-          monitorMap
-        );
-        client.disconnect();
-
-        const action = opts.remove ? "removed from" : "assigned to";
-        if (json) {
-          jsonOut({ monitorId, notificationId: notifId, action: opts.remove ? "removed" : "assigned" });
+        if (isNaN(monitorId)) {
+          handleError(new Error(`Invalid monitor ID: ${id}`), opts);
+        }
+        if (isNaN(notifId)) {
+          handleError(new Error(`Invalid notification ID: ${opts.notificationId}`), opts);
         }
 
-        success(`Notification ${notifId} ${action} monitor ${monitorId}`);
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+        try {
+          const { client } = await resolveClient(opts);
+          const monitorMap = await client.getMonitorList();
+          await client.setMonitorNotification(monitorId, notifId, !opts.remove, monitorMap);
+          client.disconnect();
+
+          const action = opts.remove ? "removed from" : "assigned to";
+          if (json) {
+            jsonOut({
+              monitorId,
+              notificationId: notifId,
+              action: opts.remove ? "removed" : "assigned",
+            });
+          }
+
+          success(`Notification ${notifId} ${action} monitor ${monitorId}`);
+        } catch (err) {
+          handleError(err, opts);
+        }
+      },
+    );
 }

@@ -32,7 +32,6 @@ function readCurrentVersion(): string {
   return "unknown";
 }
 
-
 interface GithubRelease {
   tag_name: string;
   name: string;
@@ -45,16 +44,13 @@ interface GithubRelease {
  */
 async function fetchLatestRelease(): Promise<GithubRelease | null> {
   try {
-    const res = await fetch(
-      "https://api.github.com/repos/pablofmorales/kuma-cli/releases/latest",
-      {
-        headers: {
-          "User-Agent": "kuma-cli-upgrade",
-          Accept: "application/vnd.github+json",
-        },
-        signal: AbortSignal.timeout(10_000),
-      }
-    );
+    const res = await fetch("https://api.github.com/repos/pablofmorales/kuma-cli/releases/latest", {
+      headers: {
+        "User-Agent": "kuma-cli-upgrade",
+        Accept: "application/vnd.github+json",
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
     if (!res.ok) return null;
     return (await res.json()) as GithubRelease;
   } catch {
@@ -80,9 +76,7 @@ function compareSemver(a: string, b: string): -1 | 0 | 1 {
 export function upgradeCommand(program: Command): void {
   program
     .command("upgrade")
-    .description(
-      "Update kuma-cli to the latest version from GitHub"
-    )
+    .description("Update kuma-cli to the latest version from GitHub")
     .option("--json", "Output as JSON ({ ok, data })")
     .addHelpText(
       "after",
@@ -90,7 +84,7 @@ export function upgradeCommand(program: Command): void {
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma upgrade")}              Check for updates and upgrade if available
   ${chalk.cyan("kuma upgrade --json")}       Machine-readable upgrade result
-`
+`,
     )
     .action(async (opts: { json?: boolean }) => {
       const json = isJsonMode(opts);
@@ -108,8 +102,7 @@ ${chalk.dim("Examples:")}
 
       if (!release) {
         if (!json) console.log(chalk.red("failed"));
-        const msg =
-          "Could not reach GitHub. Check your internet connection and try again.";
+        const msg = "Could not reach GitHub. Check your internet connection and try again.";
         if (json) jsonError(msg, 2);
         console.error(chalk.red(`\n❌ ${msg}`));
         process.exit(2);
@@ -135,7 +128,7 @@ ${chalk.dim("Examples:")}
         }
         console.log(
           `Latest version: ${chalk.cyan(`v${latest}`)}\n` +
-            chalk.green("✅ Already up to date — nothing to do.")
+            chalk.green("✅ Already up to date — nothing to do."),
         );
         return;
       }
@@ -144,7 +137,7 @@ ${chalk.dim("Examples:")}
       if (!json) {
         console.log(`Latest version:  ${chalk.cyan(`v${latest}`)}`);
         console.log(
-          `\n${chalk.bold(`Upgrading kuma-cli`)} ${chalk.dim(`v${current}`)} → ${chalk.green(`v${latest}`)}…`
+          `\n${chalk.bold(`Upgrading kuma-cli`)} ${chalk.dim(`v${current}`)} → ${chalk.green(`v${latest}`)}…`,
         );
       }
 
@@ -170,7 +163,7 @@ ${chalk.dim("Examples:")}
             isPermission
               ? "Permission denied. Try running with elevated permissions (sudo)."
               : `Upgrade failed: ${raw}`,
-            isPermission ? 4 : 1
+            isPermission ? 4 : 1,
           );
         }
 
@@ -178,7 +171,7 @@ ${chalk.dim("Examples:")}
           console.error(
             chalk.red("\n❌ Permission denied.") +
               " Try running with elevated permissions:\n" +
-              chalk.cyan("   sudo kuma upgrade")
+              chalk.cyan("   sudo kuma upgrade"),
           );
         } else {
           console.error(chalk.red(`\n❌ Upgrade failed: ${raw}`));
@@ -190,8 +183,6 @@ ${chalk.dim("Examples:")}
         jsonOut({ current, latest, upgraded: true });
       }
 
-      console.log(
-        chalk.green(`\n✅ kuma-cli upgraded to v${latest} successfully!`)
-      );
+      console.log(chalk.green(`\n✅ kuma-cli upgraded to v${latest} successfully!`));
     });
 }
