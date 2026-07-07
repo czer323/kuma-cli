@@ -6,7 +6,17 @@ import {
   removeClusterConfig,
   getInstanceConfig,
 } from "../config.js";
-import { createTable, success, error, warn, info, isJsonMode, jsonOut, jsonError, statusLabel } from "../utils/output.js";
+import {
+  createTable,
+  success,
+  error,
+  warn,
+  info,
+  isJsonMode,
+  jsonOut,
+  jsonError,
+  statusLabel,
+} from "../utils/output.js";
 import { createAuthenticatedClient } from "../client.js";
 import chalk from "chalk";
 
@@ -19,7 +29,10 @@ export function clusterCommand(program: Command): void {
   cluster
     .command("create <name>")
     .description("Create a cluster from existing instances")
-    .requiredOption("--instances <names>", "Comma-separated instance aliases (from kuma login --as)")
+    .requiredOption(
+      "--instances <names>",
+      "Comma-separated instance aliases (from kuma login --as)",
+    )
     .requiredOption("--primary <name>", "Instance alias to use as the primary (source of truth)")
     .option("--json", "Output as JSON")
     .addHelpText(
@@ -41,7 +54,7 @@ ${chalk.dim("How it works:")}
 
 ${chalk.dim("The --primary is the source of truth — its monitors and notifications")}
 ${chalk.dim("will be replicated to the other instances during sync.")}
-`
+`,
     )
     .action((name: string, opts: { instances: string; primary: string; json?: boolean }) => {
       const instanceNames = opts.instances.split(",").map((s) => s.trim());
@@ -78,8 +91,11 @@ ${chalk.dim("will be replicated to the other instances during sync.")}
 
       saveClusterConfig(name, { instances: instanceNames, primary: opts.primary });
 
-      if (isJsonMode(opts)) return jsonOut({ cluster: name, instances: instanceNames, primary: opts.primary });
-      success(`Cluster '${name}' created with instances: ${instanceNames.join(", ")} (primary: ${opts.primary})`);
+      if (isJsonMode(opts))
+        return jsonOut({ cluster: name, instances: instanceNames, primary: opts.primary });
+      success(
+        `Cluster '${name}' created with instances: ${instanceNames.join(", ")} (primary: ${opts.primary})`,
+      );
     });
 
   // --- list ---
@@ -158,7 +174,14 @@ ${chalk.dim("will be replicated to the other instances during sync.")}
       const results = await Promise.allSettled(
         clusterConfig.instances.map(async (instanceName) => {
           const config = getInstanceConfig(instanceName);
-          if (!config) return { instanceName, reachable: false, error: "Not configured", monitors: 0, healthMonitors: [] as { name: string; status?: number }[] };
+          if (!config)
+            return {
+              instanceName,
+              reachable: false,
+              error: "Not configured",
+              monitors: 0,
+              healthMonitors: [] as { name: string; status?: number }[],
+            };
 
           try {
             const client = await createAuthenticatedClient(config.url, config.token);
@@ -170,7 +193,10 @@ ${chalk.dim("will be replicated to the other instances during sync.")}
               instanceName,
               reachable: true,
               monitors: monitors.length - healthMonitors.length,
-              healthMonitors: healthMonitors.map((m) => ({ name: m.name, status: m.heartbeat?.status })),
+              healthMonitors: healthMonitors.map((m) => ({
+                name: m.name,
+                status: m.heartbeat?.status,
+              })),
             };
           } catch (err) {
             return {
@@ -181,22 +207,40 @@ ${chalk.dim("will be replicated to the other instances during sync.")}
               healthMonitors: [] as { name: string; status?: number }[],
             };
           }
-        })
+        }),
       );
 
       const instanceData = results.map((r) =>
-        r.status === "fulfilled" ? r.value : { instanceName: "unknown", reachable: false, error: "Connection failed", monitors: 0, healthMonitors: [] as { name: string; status?: number }[] }
+        r.status === "fulfilled"
+          ? r.value
+          : {
+              instanceName: "unknown",
+              reachable: false,
+              error: "Connection failed",
+              monitors: 0,
+              healthMonitors: [] as { name: string; status?: number }[],
+            },
       );
 
-      if (isJsonMode(opts)) return jsonOut({ cluster: name, primary: clusterConfig.primary, instances: instanceData });
+      if (isJsonMode(opts))
+        return jsonOut({ cluster: name, primary: clusterConfig.primary, instances: instanceData });
 
-      const table = createTable(["", "Instance", "URL", "Reachable", "Monitors", "Health Monitors"]);
+      const table = createTable([
+        "",
+        "Instance",
+        "URL",
+        "Reachable",
+        "Monitors",
+        "Health Monitors",
+      ]);
       for (const inst of instanceData) {
         const config = getInstanceConfig(inst.instanceName);
         const isPrimary = inst.instanceName === clusterConfig.primary;
         const healthStr = inst.healthMonitors.length
           ? inst.healthMonitors.map((h) => `${h.name}: ${statusLabel(h.status ?? 2)}`).join(", ")
-          : isPrimary ? "\u2014" : "none";
+          : isPrimary
+            ? "\u2014"
+            : "none";
 
         table.push([
           isPrimary ? "\u2192" : "",
@@ -234,7 +278,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma cluster sync my-cluster")}             ${chalk.dim("# Run the actual sync")}
 
 ${chalk.dim("Sync is idempotent — safe to run multiple times.")}
-`
+`,
     )
     .action(async (name: string, opts: { dryRun?: boolean; json?: boolean }) => {
       const clusterConfig = getClusterConfig(name);
@@ -266,7 +310,10 @@ ${chalk.dim("Sync is idempotent — safe to run multiple times.")}
       const secondaries = clusterConfig.instances.filter((i) => i !== clusterConfig.primary);
 
       // Connect to all secondaries upfront to avoid redundant connections
-      const secClients: Record<string, ReturnType<typeof createAuthenticatedClient> extends Promise<infer T> ? T : never> = {};
+      const secClients: Record<
+        string,
+        ReturnType<typeof createAuthenticatedClient> extends Promise<infer T> ? T : never
+      > = {};
       for (const secName of secondaries) {
         const secConfig = getInstanceConfig(secName);
         if (!secConfig) {
@@ -276,159 +323,193 @@ ${chalk.dim("Sync is idempotent — safe to run multiple times.")}
         try {
           secClients[secName] = await createAuthenticatedClient(secConfig.url, secConfig.token);
         } catch (err) {
-          if (!isJsonMode(opts)) warn(`Skipping '${secName}': ${err instanceof Error ? err.message : err}`);
+          if (!isJsonMode(opts))
+            warn(`Skipping '${secName}': ${err instanceof Error ? err.message : err}`);
           continue;
         }
       }
 
       try {
-      const primaryMonitorMap = await primaryClient.getMonitorList();
-      const primaryMonitors = Object.values(primaryMonitorMap);
-      // Filter out cluster health monitors
-      const monitorsToSync = primaryMonitors.filter(
-        (m) => !m.name.startsWith("[cluster] ")
-      );
+        const primaryMonitorMap = await primaryClient.getMonitorList();
+        const primaryMonitors = Object.values(primaryMonitorMap);
+        // Filter out cluster health monitors
+        const monitorsToSync = primaryMonitors.filter((m) => !m.name.startsWith("[cluster] "));
 
-      if (!isJsonMode(opts)) {
-        info(`Syncing cluster '${name}' (primary: ${clusterConfig.primary})`);
-        info(`Monitors to sync: ${monitorsToSync.length}`);
-      }
-
-      const syncResults: Record<string, { created: number; skipped: number; failed: number }> = {};
-
-      for (const secName of secondaries) {
-        if (!secClients[secName]) {
-          syncResults[secName] = { created: 0, skipped: 0, failed: monitorsToSync.length };
-          continue;
+        if (!isJsonMode(opts)) {
+          info(`Syncing cluster '${name}' (primary: ${clusterConfig.primary})`);
+          info(`Monitors to sync: ${monitorsToSync.length}`);
         }
 
-        const secClient = secClients[secName];
+        const syncResults: Record<string, { created: number; skipped: number; failed: number }> =
+          {};
 
-        const secMonitorMap = await secClient.getMonitorList();
-        const secMonitors = Object.values(secMonitorMap);
-        let created = 0, skipped = 0, failed = 0;
+        for (const secName of secondaries) {
+          if (!secClients[secName]) {
+            syncResults[secName] = { created: 0, skipped: 0, failed: monitorsToSync.length };
+            continue;
+          }
 
-        for (const monitor of monitorsToSync) {
-          const exists = secMonitors.some(
-            (m) => m.name === monitor.name && m.type === monitor.type && (m.url === monitor.url || m.hostname === monitor.hostname)
+          const secClient = secClients[secName];
+
+          const secMonitorMap = await secClient.getMonitorList();
+          const secMonitors = Object.values(secMonitorMap);
+          let created = 0,
+            skipped = 0,
+            failed = 0;
+
+          for (const monitor of monitorsToSync) {
+            const exists = secMonitors.some(
+              (m) =>
+                m.name === monitor.name &&
+                m.type === monitor.type &&
+                (m.url === monitor.url || m.hostname === monitor.hostname),
+            );
+
+            if (exists) {
+              skipped++;
+              continue;
+            }
+
+            if (opts.dryRun) {
+              created++;
+              if (!isJsonMode(opts))
+                info(`  [dry-run] Would create: ${monitor.name} (${monitor.type})`);
+              continue;
+            }
+
+            try {
+              const { id, heartbeat, uptime, active, tags, notificationIDList, ...monitorData } =
+                monitor as any;
+              await secClient.addMonitor(monitorData);
+              created++;
+            } catch (err) {
+              failed++;
+              if (!isJsonMode(opts))
+                warn(
+                  `  Failed to create '${monitor.name}' on ${secName}: ${err instanceof Error ? err.message : err}`,
+                );
+            }
+          }
+
+          syncResults[secName] = { created, skipped, failed };
+        }
+
+        // --- Cross-health monitors ---
+        let healthCreated = 0,
+          healthSkipped = 0;
+
+        for (const instanceName of clusterConfig.instances) {
+          const client =
+            instanceName === clusterConfig.primary ? primaryClient : secClients[instanceName];
+          if (!client) continue;
+
+          const monitorMap = await client.getMonitorList();
+          const monitors = Object.values(monitorMap);
+          const otherInstances = clusterConfig.instances.filter((i) => i !== instanceName);
+
+          for (const otherName of otherInstances) {
+            const otherConfig = getInstanceConfig(otherName);
+            if (!otherConfig) continue;
+
+            const exists = monitors.some(
+              (m) => m.url === otherConfig.url || m.url === otherConfig.url + "/",
+            );
+
+            if (exists) {
+              healthSkipped++;
+              continue;
+            }
+
+            if (opts.dryRun) {
+              healthCreated++;
+              if (!isJsonMode(opts))
+                info(`  [dry-run] Would create health monitor: ${instanceName} -> ${otherName}`);
+              continue;
+            }
+
+            try {
+              await client.addMonitor({
+                name: `[cluster] ${otherName}`,
+                type: "http",
+                url: otherConfig.url,
+                interval: 60,
+              });
+              healthCreated++;
+            } catch (err) {
+              if (!isJsonMode(opts))
+                warn(
+                  `  Failed to create health monitor on ${instanceName} -> ${otherName}: ${err instanceof Error ? err.message : err}`,
+                );
+            }
+          }
+        }
+
+        // --- Notification sync (disabled on secondaries) ---
+        const primaryNotifications = await primaryClient.getNotificationList();
+        let notifSynced = 0,
+          notifSkipped = 0;
+
+        for (const secName of secondaries) {
+          const secClient = secClients[secName];
+          if (!secClient) continue;
+
+          const secNotifications = await secClient.getNotificationList();
+
+          for (const notif of primaryNotifications) {
+            const exists = secNotifications.some((n) => n.name === notif.name);
+            if (exists) {
+              notifSkipped++;
+              continue;
+            }
+
+            if (opts.dryRun) {
+              notifSynced++;
+              if (!isJsonMode(opts))
+                info(`  [dry-run] Would sync notification: ${notif.name} (disabled)`);
+              continue;
+            }
+
+            try {
+              const config =
+                typeof notif.config === "string" ? JSON.parse(notif.config) : notif.config;
+              await secClient.addNotification({
+                ...config,
+                name: notif.name,
+                active: false,
+                isDefault: false,
+              });
+              notifSynced++;
+            } catch (err) {
+              if (!isJsonMode(opts))
+                warn(
+                  `  Failed to sync notification '${notif.name}' to ${secName}: ${err instanceof Error ? err.message : err}`,
+                );
+            }
+          }
+        }
+
+        if (isJsonMode(opts)) {
+          return jsonOut({
+            cluster: name,
+            dryRun: opts.dryRun ?? false,
+            monitors: syncResults,
+            health: { created: healthCreated, skipped: healthSkipped },
+            notifications: { synced: notifSynced, skipped: notifSkipped },
+          });
+        }
+
+        console.log("");
+        for (const [secName, result] of Object.entries(syncResults)) {
+          info(
+            `${clusterConfig.primary} \u2192 ${secName}: ${result.created} created, ${result.skipped} skipped, ${result.failed} failed`,
           );
-
-          if (exists) { skipped++; continue; }
-
-          if (opts.dryRun) {
-            created++;
-            if (!isJsonMode(opts)) info(`  [dry-run] Would create: ${monitor.name} (${monitor.type})`);
-            continue;
-          }
-
-          try {
-            const { id, heartbeat, uptime, active, tags, notificationIDList, ...monitorData } = monitor as any;
-            await secClient.addMonitor(monitorData);
-            created++;
-          } catch (err) {
-            failed++;
-            if (!isJsonMode(opts)) warn(`  Failed to create '${monitor.name}' on ${secName}: ${err instanceof Error ? err.message : err}`);
-          }
         }
-
-        syncResults[secName] = { created, skipped, failed };
-      }
-
-      // --- Cross-health monitors ---
-      let healthCreated = 0, healthSkipped = 0;
-
-      for (const instanceName of clusterConfig.instances) {
-        const client = instanceName === clusterConfig.primary
-          ? primaryClient
-          : secClients[instanceName];
-        if (!client) continue;
-
-        const monitorMap = await client.getMonitorList();
-        const monitors = Object.values(monitorMap);
-        const otherInstances = clusterConfig.instances.filter((i) => i !== instanceName);
-
-        for (const otherName of otherInstances) {
-          const otherConfig = getInstanceConfig(otherName);
-          if (!otherConfig) continue;
-
-          const exists = monitors.some((m) => m.url === otherConfig.url || m.url === otherConfig.url + "/");
-
-          if (exists) { healthSkipped++; continue; }
-
-          if (opts.dryRun) {
-            healthCreated++;
-            if (!isJsonMode(opts)) info(`  [dry-run] Would create health monitor: ${instanceName} -> ${otherName}`);
-            continue;
-          }
-
-          try {
-            await client.addMonitor({
-              name: `[cluster] ${otherName}`,
-              type: "http",
-              url: otherConfig.url,
-              interval: 60,
-            });
-            healthCreated++;
-          } catch (err) {
-            if (!isJsonMode(opts)) warn(`  Failed to create health monitor on ${instanceName} -> ${otherName}: ${err instanceof Error ? err.message : err}`);
-          }
-        }
-      }
-
-      // --- Notification sync (disabled on secondaries) ---
-      const primaryNotifications = await primaryClient.getNotificationList();
-      let notifSynced = 0, notifSkipped = 0;
-
-      for (const secName of secondaries) {
-        const secClient = secClients[secName];
-        if (!secClient) continue;
-
-        const secNotifications = await secClient.getNotificationList();
-
-        for (const notif of primaryNotifications) {
-          const exists = secNotifications.some((n) => n.name === notif.name);
-          if (exists) { notifSkipped++; continue; }
-
-          if (opts.dryRun) {
-            notifSynced++;
-            if (!isJsonMode(opts)) info(`  [dry-run] Would sync notification: ${notif.name} (disabled)`);
-            continue;
-          }
-
-          try {
-            const config = typeof notif.config === "string" ? JSON.parse(notif.config) : notif.config;
-            await secClient.addNotification({
-              ...config,
-              name: notif.name,
-              active: false,
-              isDefault: false,
-            });
-            notifSynced++;
-          } catch (err) {
-            if (!isJsonMode(opts)) warn(`  Failed to sync notification '${notif.name}' to ${secName}: ${err instanceof Error ? err.message : err}`);
-          }
-        }
-      }
-
-      if (isJsonMode(opts)) {
-        return jsonOut({
-          cluster: name,
-          dryRun: opts.dryRun ?? false,
-          monitors: syncResults,
-          health: { created: healthCreated, skipped: healthSkipped },
-          notifications: { synced: notifSynced, skipped: notifSkipped },
-        });
-      }
-
-      console.log("");
-      for (const [secName, result] of Object.entries(syncResults)) {
-        info(`${clusterConfig.primary} \u2192 ${secName}: ${result.created} created, ${result.skipped} skipped, ${result.failed} failed`);
-      }
-      info(`Health monitors: ${healthCreated} created, ${healthSkipped} skipped`);
-      info(`Notifications: ${notifSynced} synced (disabled on secondaries), ${notifSkipped} skipped`);
-      if (opts.dryRun) warn("Dry run \u2014 no changes were made.");
-      else success("Sync complete.");
-
+        info(`Health monitors: ${healthCreated} created, ${healthSkipped} skipped`);
+        info(
+          `Notifications: ${notifSynced} synced (disabled on secondaries), ${notifSkipped} skipped`,
+        );
+        if (opts.dryRun) warn("Dry run \u2014 no changes were made.");
+        else success("Sync complete.");
       } finally {
         primaryClient.disconnect();
         for (const client of Object.values(secClients)) {

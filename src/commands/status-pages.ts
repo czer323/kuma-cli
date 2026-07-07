@@ -16,7 +16,7 @@ ${chalk.dim("Subcommands:")}
   ${chalk.cyan("status-pages list")}   List all status pages with their slugs and publish state
 
 ${chalk.dim("Run")} ${chalk.cyan("kuma status-pages <subcommand> --help")} ${chalk.dim("for examples.")}
-`
+`,
     );
 
   sp.command("list")
@@ -30,7 +30,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma status-pages list")}
   ${chalk.cyan("kuma status-pages list --json")}
   ${chalk.cyan("kuma status-pages list --json | jq '.data[] | select(.published) | .slug'")}
-`
+`,
     )
     .action(async (opts: { json?: boolean; instance?: string }) => {
       const json = isJsonMode(opts);

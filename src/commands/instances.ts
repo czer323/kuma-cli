@@ -5,7 +5,15 @@ import {
   removeInstanceConfig,
   getInstanceCluster,
 } from "../config.js";
-import { createTable, success, error, warn, isJsonMode, jsonOut, jsonError } from "../utils/output.js";
+import {
+  createTable,
+  success,
+  error,
+  warn,
+  isJsonMode,
+  jsonOut,
+  jsonError,
+} from "../utils/output.js";
 
 export function instancesCommand(program: Command): void {
   const instances = program

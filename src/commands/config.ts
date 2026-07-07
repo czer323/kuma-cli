@@ -13,9 +13,12 @@ import chalk from "chalk";
  * or attempt injection on the Kuma API endpoint.
  */
 const FORBIDDEN_NOTIFICATION_FIELDS = new Set([
-  "__proto__", "constructor", "prototype",
+  "__proto__",
+  "constructor",
+  "prototype",
   // Kuma internal columns that shouldn't be overridden via config blob
-  "id", "user_id"
+  "id",
+  "user_id",
 ]);
 
 export function configCommand(program: Command): void {
@@ -42,7 +45,7 @@ export function configCommand(program: Command): void {
         if (opts.tag) {
           const tagName = opts.tag.toLowerCase();
           targetMonitors = targetMonitors.filter(
-            (m) => Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName)
+            (m) => Array.isArray(m.tags) && m.tags.some((t) => t.name.toLowerCase() === tagName),
           );
         }
 
@@ -76,11 +79,16 @@ export function configCommand(program: Command): void {
             const cleanConfig = Object.fromEntries(
               Object.entries(parsedConfig).map(([k, v]) => {
                 const lower = k.toLowerCase();
-                if (lower.includes("token") || lower.includes("password") || lower.includes("webhook") || lower.includes("secret")) {
+                if (
+                  lower.includes("token") ||
+                  lower.includes("password") ||
+                  lower.includes("webhook") ||
+                  lower.includes("secret")
+                ) {
                   return [k, "********"];
                 }
                 return [k, v];
-              })
+              }),
             );
 
             return { ...rest, config: JSON.stringify(cleanConfig) };
@@ -122,65 +130,100 @@ export function configCommand(program: Command): void {
     .option("--dry-run", "Preview what would be created/updated without saving")
     .option("--json", "Output as JSON ({ ok, data })")
     .option("--instance <name>", "Target a specific instance")
-    .action(async (file: string, opts: { onConflict: string; dryRun?: boolean; json?: boolean; instance?: string }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (
+        file: string,
+        opts: { onConflict: string; dryRun?: boolean; json?: boolean; instance?: string },
+      ) => {
+        const json = isJsonMode(opts);
 
-      try {
-        const raw = readFileSync(file, "utf8");
-        let data: any;
-        if (file.endsWith(".yaml") || file.endsWith(".yml")) {
-          data = yaml.load(raw, { schema: yaml.JSON_SCHEMA });
-        } else {
-          data = JSON.parse(raw);
-        }
+        try {
+          const raw = readFileSync(file, "utf8");
+          let data: any;
+          if (file.endsWith(".yaml") || file.endsWith(".yml")) {
+            data = yaml.load(raw, { schema: yaml.JSON_SCHEMA });
+          } else {
+            data = JSON.parse(raw);
+          }
 
-        if (data.version !== "1" || !Array.isArray(data.monitors)) {
-          throw new Error("Invalid export file format");
-        }
+          if (data.version !== "1" || !Array.isArray(data.monitors)) {
+            throw new Error("Invalid export file format");
+          }
 
-        const { client } = await resolveClient(opts);
-        const existingMonitors = Object.values(await client.getMonitorList());
-        const existingMap = new Map(existingMonitors.map((m) => [m.name, m]));
+          const { client } = await resolveClient(opts);
+          const existingMonitors = Object.values(await client.getMonitorList());
+          const existingMap = new Map(existingMonitors.map((m) => [m.name, m]));
 
-        let createdCount = 0;
-        let updatedCount = 0;
-        let skippedCount = 0;
+          let createdCount = 0;
+          let updatedCount = 0;
+          let skippedCount = 0;
 
-        for (const m of data.monitors) {
-          const existing = existingMap.get(m.name);
+          for (const m of data.monitors) {
+            const existing = existingMap.get(m.name);
 
-          if (existing) {
-            if (opts.onConflict === "update") {
-              updatedCount++;
-              if (!opts.dryRun) {
-                const { tags, notificationIDList, ...patch } = m;
-                await client.editMonitor(existing.id, patch);
+            if (existing) {
+              if (opts.onConflict === "update") {
+                updatedCount++;
+                if (!opts.dryRun) {
+                  const { tags, notificationIDList, ...patch } = m;
+                  await client.editMonitor(existing.id, patch);
+                }
+              } else {
+                skippedCount++;
               }
             } else {
-              skippedCount++;
-            }
-          } else {
-            createdCount++;
-            if (!opts.dryRun) {
-              const { tags, notificationIDList, ...payload } = m;
-              await client.addMonitor(payload);
+              createdCount++;
+              if (!opts.dryRun) {
+                const { tags, notificationIDList, ...payload } = m;
+                await client.addMonitor(payload);
+              }
             }
           }
-        }
 
-        const existingNotifications = await client.getNotificationList();
-        const existingNotifMap = new Map(existingNotifications.map((n) => [n.name, n]));
+          const existingNotifications = await client.getNotificationList();
+          const existingNotifMap = new Map(existingNotifications.map((n) => [n.name, n]));
 
-        let createdNotifCount = 0;
-        let updatedNotifCount = 0;
-        let skippedNotifCount = 0;
+          let createdNotifCount = 0;
+          let updatedNotifCount = 0;
+          let skippedNotifCount = 0;
 
-        for (const n of data.notifications || []) {
-          const existing = existingNotifMap.get(n.name);
+          for (const n of data.notifications || []) {
+            const existing = existingNotifMap.get(n.name);
 
-          if (existing) {
-            if (opts.onConflict === "update") {
-              updatedNotifCount++;
+            if (existing) {
+              if (opts.onConflict === "update") {
+                updatedNotifCount++;
+                if (!opts.dryRun) {
+                  let parsedConfig: Record<string, any> = {};
+                  try {
+                    parsedConfig = JSON.parse(n.config);
+                  } catch {
+                    // ignore
+                  }
+
+                  // Security fix #49: apply denylist before sending to Kuma API
+                  const safeConfig: Record<string, any> = {};
+                  for (const [k, v] of Object.entries(parsedConfig)) {
+                    if (FORBIDDEN_NOTIFICATION_FIELDS.has(k) || k.startsWith("__")) {
+                      if (!json)
+                        console.warn(
+                          chalk.yellow(`⚠️  Ignored forbidden notification field: ${k}`),
+                        );
+                    } else {
+                      safeConfig[k] = v;
+                    }
+                  }
+
+                  await client.addNotification(
+                    { ...safeConfig, name: n.name, type: safeConfig.type || n.type } as any,
+                    existing.id,
+                  );
+                }
+              } else {
+                skippedNotifCount++;
+              }
+            } else {
+              createdNotifCount++;
               if (!opts.dryRun) {
                 let parsedConfig: Record<string, any> = {};
                 try {
@@ -193,68 +236,52 @@ export function configCommand(program: Command): void {
                 const safeConfig: Record<string, any> = {};
                 for (const [k, v] of Object.entries(parsedConfig)) {
                   if (FORBIDDEN_NOTIFICATION_FIELDS.has(k) || k.startsWith("__")) {
-                    if (!json) console.warn(chalk.yellow(`⚠️  Ignored forbidden notification field: ${k}`));
+                    if (!json)
+                      console.warn(chalk.yellow(`⚠️  Ignored forbidden notification field: ${k}`));
                   } else {
                     safeConfig[k] = v;
                   }
                 }
 
-                await client.addNotification({ ...safeConfig, name: n.name, type: safeConfig.type || n.type } as any, existing.id);
+                await client.addNotification({
+                  ...safeConfig,
+                  name: n.name,
+                  type: safeConfig.type || n.type,
+                } as any);
               }
-            } else {
-              skippedNotifCount++;
-            }
-          } else {
-            createdNotifCount++;
-            if (!opts.dryRun) {
-              let parsedConfig: Record<string, any> = {};
-              try {
-                parsedConfig = JSON.parse(n.config);
-              } catch {
-                // ignore
-              }
-
-              // Security fix #49: apply denylist before sending to Kuma API
-              const safeConfig: Record<string, any> = {};
-              for (const [k, v] of Object.entries(parsedConfig)) {
-                if (FORBIDDEN_NOTIFICATION_FIELDS.has(k) || k.startsWith("__")) {
-                  if (!json) console.warn(chalk.yellow(`⚠️  Ignored forbidden notification field: ${k}`));
-                } else {
-                  safeConfig[k] = v;
-                }
-              }
-
-              await client.addNotification({ ...safeConfig, name: n.name, type: safeConfig.type || n.type } as any);
             }
           }
+
+          client.disconnect();
+
+          if (json) {
+            jsonOut({
+              dryRun: !!opts.dryRun,
+              monitors: { created: createdCount, updated: updatedCount, skipped: skippedCount },
+              notifications: {
+                created: createdNotifCount,
+                updated: updatedNotifCount,
+                skipped: skippedNotifCount,
+              },
+            });
+          }
+
+          if (opts.dryRun) {
+            console.log(chalk.yellow("Dry run summary:"));
+          } else {
+            success("Import complete:");
+          }
+          console.log(chalk.bold("\nMonitors:"));
+          console.log(`  Created: ${createdCount}`);
+          console.log(`  Updated: ${updatedCount}`);
+          console.log(`  Skipped: ${skippedCount}`);
+          console.log(chalk.bold("\nNotifications:"));
+          console.log(`  Created: ${createdNotifCount}`);
+          console.log(`  Updated: ${updatedNotifCount}`);
+          console.log(`  Skipped: ${skippedNotifCount}`);
+        } catch (err) {
+          handleError(err, opts);
         }
-
-        client.disconnect();
-
-        if (json) {
-          jsonOut({
-            dryRun: !!opts.dryRun,
-            monitors: { created: createdCount, updated: updatedCount, skipped: skippedCount },
-            notifications: { created: createdNotifCount, updated: updatedNotifCount, skipped: skippedNotifCount },
-          });
-        }
-
-        if (opts.dryRun) {
-          console.log(chalk.yellow("Dry run summary:"));
-        } else {
-          success("Import complete:");
-        }
-        console.log(chalk.bold("\nMonitors:"));
-        console.log(`  Created: ${createdCount}`);
-        console.log(`  Updated: ${updatedCount}`);
-        console.log(`  Skipped: ${skippedCount}`);
-        console.log(chalk.bold("\nNotifications:"));
-        console.log(`  Created: ${createdNotifCount}`);
-        console.log(`  Updated: ${updatedNotifCount}`);
-        console.log(`  Skipped: ${skippedNotifCount}`);
-
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+      },
+    );
 }

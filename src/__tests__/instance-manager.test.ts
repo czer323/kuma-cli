@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vite-plus/test";
 import { resolveInstanceName } from "../instance-manager.js";
 
 vi.mock("../config.js", () => ({
@@ -12,7 +12,12 @@ vi.mock("../client.js", () => ({
   createAuthenticatedClient: vi.fn(),
 }));
 
-import { getInstanceConfig, getClusterConfig, getActiveContext, getAllInstances } from "../config.js";
+import {
+  getInstanceConfig,
+  getClusterConfig,
+  getActiveContext,
+  getAllInstances,
+} from "../config.js";
 
 const mockGetInstanceConfig = vi.mocked(getInstanceConfig);
 const mockGetClusterConfig = vi.mocked(getClusterConfig);
@@ -20,7 +25,9 @@ const mockGetActiveContext = vi.mocked(getActiveContext);
 const mockGetAllInstances = vi.mocked(getAllInstances);
 
 describe("resolveInstanceName", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("returns --instance flag when provided", () => {
     mockGetInstanceConfig.mockReturnValue({ url: "https://kuma.example.com", token: "abc" });
@@ -45,7 +52,9 @@ describe("resolveInstanceName", () => {
 
   it("returns sole instance when only one exists", () => {
     mockGetActiveContext.mockReturnValue(null);
-    mockGetAllInstances.mockReturnValue({ onlyone: { url: "https://kuma.example.com", token: "abc" } });
+    mockGetAllInstances.mockReturnValue({
+      onlyone: { url: "https://kuma.example.com", token: "abc" },
+    });
     expect(resolveInstanceName({})).toBe("onlyone");
   });
 

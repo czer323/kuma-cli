@@ -1,5 +1,11 @@
 import { Command } from "commander";
-import { clearConfig, getActiveContext, getInstanceConfig, getAllInstances, clearInstanceToken } from "../config.js";
+import {
+  clearConfig,
+  getActiveContext,
+  getInstanceConfig,
+  getAllInstances,
+  clearInstanceToken,
+} from "../config.js";
 import { success, error, isJsonMode, jsonOut } from "../utils/output.js";
 import chalk from "chalk";
 
@@ -15,7 +21,7 @@ export function logoutCommand(program: Command): void {
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma logout")}
   ${chalk.cyan("kuma logout --json")}
-`
+`,
     )
     .action((opts: { json?: boolean; all?: boolean }) => {
       const json = isJsonMode(opts);

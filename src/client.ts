@@ -112,22 +112,16 @@ export class KumaClient {
     });
 
     // Buffer heartbeatList events from the moment the socket is created
-    this.socket.on(
-      "heartbeatList",
-      (monitorId: number, data: Heartbeat[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          this.heartbeatCache[monitorId] = data[data.length - 1];
-        }
+    this.socket.on("heartbeatList", (monitorId: number, data: Heartbeat[]) => {
+      if (Array.isArray(data) && data.length > 0) {
+        this.heartbeatCache[monitorId] = data[data.length - 1];
       }
-    );
+    });
 
     // Buffer uptime events (24h period used for the list view)
-    this.socket.on(
-      "uptime",
-      (monitorId: number, period: string, value: number) => {
-        this.uptimeCache[`${monitorId}_${period}`] = value;
-      }
-    );
+    this.socket.on("uptime", (monitorId: number, period: string, value: number) => {
+      this.uptimeCache[`${monitorId}_${period}`] = value;
+    });
 
     // BUG-02 fix: Kuma pushes statusPageList immediately after afterLogin.
     // Capture it here so getStatusPageList() never races against the push.
@@ -179,28 +173,18 @@ export class KumaClient {
   // BUG-01 fix: use Socket.IO acknowledgement callbacks instead of waitFor()
   async login(username: string, password: string): Promise<LoginResult> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Login timeout")),
-        10000
-      );
-      this.socket.emit(
-        "login",
-        { username, password },
-        (result: LoginResult) => {
-          clearTimeout(timer);
-          resolve(result);
-        }
-      );
+      const timer = setTimeout(() => reject(new Error("Login timeout")), 10000);
+      this.socket.emit("login", { username, password }, (result: LoginResult) => {
+        clearTimeout(timer);
+        resolve(result);
+      });
     });
   }
 
   // BUG-01 fix: loginByToken also uses callback pattern
   async loginByToken(token: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Login timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("Login timeout")), 10000);
       this.socket.emit("loginByToken", token, (result: { ok: boolean }) => {
         clearTimeout(timer);
         resolve(result.ok);
@@ -210,10 +194,7 @@ export class KumaClient {
 
   async getMonitorList(): Promise<Record<string, Monitor>> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("getMonitorList timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("getMonitorList timeout")), 10000);
 
       // Register monitorList listener BEFORE emitting the request.
       // The server responds via a "monitorList" push event (not a callback ack).
@@ -236,7 +217,9 @@ export class KumaClient {
 
   // BUG-01 fix: addMonitor uses callback, not a separate event
   // BUG-03 fix: include required fields accepted_statuscodes, maxretries, retryInterval
-  async addMonitor(monitor: Partial<Monitor> & { pushToken?: string }): Promise<{ id: number; pushToken?: string }> {
+  async addMonitor(
+    monitor: Partial<Monitor> & { pushToken?: string },
+  ): Promise<{ id: number; pushToken?: string }> {
     // Auto-generate a pushToken for push monitors if not provided.
     // Kuma stores it on the monitor bean; without this it stays null.
     const autoToken =
@@ -258,10 +241,7 @@ export class KumaClient {
       ...monitor,
     };
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Add monitor timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("Add monitor timeout")), 10000);
       this.socket.emit(
         "add",
         payload,
@@ -277,7 +257,7 @@ export class KumaClient {
             // Return the token we generated so the caller has it immediately
             pushToken: (payload as { pushToken?: string }).pushToken,
           });
-        }
+        },
       );
     });
   }
@@ -286,10 +266,7 @@ export class KumaClient {
   // BUG-04 fix: check result.ok and throw on failure
   async editMonitor(id: number, monitor: Partial<Monitor>): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Edit monitor timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("Edit monitor timeout")), 10000);
       this.socket.emit(
         "editMonitor",
         { ...monitor, id },
@@ -300,7 +277,7 @@ export class KumaClient {
             return;
           }
           resolve();
-        }
+        },
       );
     });
   }
@@ -309,22 +286,15 @@ export class KumaClient {
   // BUG-04 fix: check result.ok and throw on failure
   async deleteMonitor(id: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Delete monitor timeout")),
-        10000
-      );
-      this.socket.emit(
-        "deleteMonitor",
-        id,
-        (result: { ok: boolean; msg?: string }) => {
-          clearTimeout(timer);
-          if (!result.ok) {
-            reject(new Error(result.msg ?? "Operation failed"));
-            return;
-          }
-          resolve();
+      const timer = setTimeout(() => reject(new Error("Delete monitor timeout")), 10000);
+      this.socket.emit("deleteMonitor", id, (result: { ok: boolean; msg?: string }) => {
+        clearTimeout(timer);
+        if (!result.ok) {
+          reject(new Error(result.msg ?? "Operation failed"));
+          return;
         }
-      );
+        resolve();
+      });
     });
   }
 
@@ -332,22 +302,15 @@ export class KumaClient {
   // BUG-04 fix: check result.ok and throw on failure
   async pauseMonitor(id: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Pause monitor timeout")),
-        10000
-      );
-      this.socket.emit(
-        "pauseMonitor",
-        id,
-        (result: { ok: boolean; msg?: string }) => {
-          clearTimeout(timer);
-          if (!result.ok) {
-            reject(new Error(result.msg ?? "Operation failed"));
-            return;
-          }
-          resolve();
+      const timer = setTimeout(() => reject(new Error("Pause monitor timeout")), 10000);
+      this.socket.emit("pauseMonitor", id, (result: { ok: boolean; msg?: string }) => {
+        clearTimeout(timer);
+        if (!result.ok) {
+          reject(new Error(result.msg ?? "Operation failed"));
+          return;
         }
-      );
+        resolve();
+      });
     });
   }
 
@@ -355,22 +318,15 @@ export class KumaClient {
   // BUG-04 fix: check result.ok and throw on failure
   async resumeMonitor(id: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("Resume monitor timeout")),
-        10000
-      );
-      this.socket.emit(
-        "resumeMonitor",
-        id,
-        (result: { ok: boolean; msg?: string }) => {
-          clearTimeout(timer);
-          if (!result.ok) {
-            reject(new Error(result.msg ?? "Operation failed"));
-            return;
-          }
-          resolve();
+      const timer = setTimeout(() => reject(new Error("Resume monitor timeout")), 10000);
+      this.socket.emit("resumeMonitor", id, (result: { ok: boolean; msg?: string }) => {
+        clearTimeout(timer);
+        if (!result.ok) {
+          reject(new Error(result.msg ?? "Operation failed"));
+          return;
         }
-      );
+        resolve();
+      });
     });
   }
 
@@ -379,15 +335,9 @@ export class KumaClient {
   // waitFor a "heartbeatList" push event — causing a timeout every time.
   // The correct API: socket.emit("getMonitorBeats", monitorID, periodHours, cb)
   // cb receives { ok: boolean, data: Heartbeat[] }
-  async getHeartbeatList(
-    monitorId: number,
-    periodHours = 24
-  ): Promise<Heartbeat[]> {
+  async getHeartbeatList(monitorId: number, periodHours = 24): Promise<Heartbeat[]> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("getMonitorBeats timeout")),
-        15000
-      );
+      const timer = setTimeout(() => reject(new Error("getMonitorBeats timeout")), 15000);
       this.socket.emit(
         "getMonitorBeats",
         monitorId,
@@ -399,7 +349,7 @@ export class KumaClient {
             return;
           }
           resolve(result.data ?? []);
-        }
+        },
       );
     });
   }
@@ -409,7 +359,7 @@ export class KumaClient {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(
         () => reject(new Error("monitorImportantHeartbeatListCount timeout")),
-        10000
+        10000,
       );
       this.socket.emit(
         "monitorImportantHeartbeatListCount",
@@ -421,7 +371,7 @@ export class KumaClient {
             return;
           }
           resolve(result.count ?? 0);
-        }
+        },
       );
     });
   }
@@ -429,12 +379,12 @@ export class KumaClient {
   async getImportantHeartbeatListPaged(
     monitorId: number,
     offset: number,
-    count: number
+    count: number,
   ): Promise<Heartbeat[]> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(
         () => reject(new Error("monitorImportantHeartbeatListPaged timeout")),
-        10000
+        10000,
       );
       this.socket.emit(
         "monitorImportantHeartbeatListPaged",
@@ -448,7 +398,7 @@ export class KumaClient {
             return;
           }
           resolve(result.data ?? []);
-        }
+        },
       );
     });
   }
@@ -486,17 +436,14 @@ export class KumaClient {
   async getTags(): Promise<MonitorTag[]> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("getTags timeout")), 10000);
-      this.socket.emit(
-        "getTags",
-        (result: { ok: boolean; tags?: MonitorTag[]; msg?: string }) => {
-          clearTimeout(timer);
-          if (!result.ok) {
-            reject(new Error(result.msg ?? "Failed to fetch tags"));
-            return;
-          }
-          resolve(result.tags ?? []);
+      this.socket.emit("getTags", (result: { ok: boolean; tags?: MonitorTag[]; msg?: string }) => {
+        clearTimeout(timer);
+        if (!result.ok) {
+          reject(new Error(result.msg ?? "Failed to fetch tags"));
+          return;
         }
-      );
+        resolve(result.tags ?? []);
+      });
     });
   }
 
@@ -520,7 +467,7 @@ export class KumaClient {
             return;
           }
           resolve();
-        }
+        },
       );
     });
   }
@@ -555,15 +502,9 @@ export class KumaClient {
    * Server event: addNotification(notification, id|null, callback)
    * callback: { ok: boolean, id?: number, msg?: string }
    */
-  async addNotification(
-    payload: NotificationPayload,
-    id: number | null = null
-  ): Promise<number> {
+  async addNotification(payload: NotificationPayload, id: number | null = null): Promise<number> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("addNotification timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("addNotification timeout")), 10000);
       this.socket.emit(
         "addNotification",
         payload,
@@ -575,7 +516,7 @@ export class KumaClient {
             return;
           }
           resolve(result.id!);
-        }
+        },
       );
     });
   }
@@ -585,22 +526,15 @@ export class KumaClient {
    */
   async deleteNotification(id: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("deleteNotification timeout")),
-        10000
-      );
-      this.socket.emit(
-        "deleteNotification",
-        id,
-        (result: { ok: boolean; msg?: string }) => {
-          clearTimeout(timer);
-          if (!result.ok) {
-            reject(new Error(result.msg ?? "Failed to delete notification"));
-            return;
-          }
-          resolve();
+      const timer = setTimeout(() => reject(new Error("deleteNotification timeout")), 10000);
+      this.socket.emit("deleteNotification", id, (result: { ok: boolean; msg?: string }) => {
+        clearTimeout(timer);
+        if (!result.ok) {
+          reject(new Error(result.msg ?? "Failed to delete notification"));
+          return;
         }
-      );
+        resolve();
+      });
     });
   }
 
@@ -614,7 +548,7 @@ export class KumaClient {
     monitorId: number,
     notificationId: number,
     enabled: boolean,
-    monitorMap: Record<string, Monitor>
+    monitorMap: Record<string, Monitor>,
   ): Promise<void> {
     const existing = monitorMap[String(monitorId)];
     if (!existing) {
@@ -627,10 +561,7 @@ export class KumaClient {
     notifIdList[String(notificationId)] = enabled;
 
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error("setMonitorNotification timeout")),
-        10000
-      );
+      const timer = setTimeout(() => reject(new Error("setMonitorNotification timeout")), 10000);
       this.socket.emit(
         "editMonitor",
         { ...existing, id: monitorId, notificationIDList: notifIdList },
@@ -641,7 +572,7 @@ export class KumaClient {
             return;
           }
           resolve();
-        }
+        },
       );
     });
   }
@@ -655,7 +586,7 @@ export class KumaClient {
    * Returns a list of { id, name, ok, error? } results.
    */
   async bulkPause(
-    filter: (m: Monitor) => boolean
+    filter: (m: Monitor) => boolean,
   ): Promise<Array<{ id: number; name: string; ok: boolean; error?: string }>> {
     const monitorMap = await this.getMonitorList();
     const targets = Object.values(monitorMap).filter(filter);
@@ -676,7 +607,7 @@ export class KumaClient {
    * Returns a list of { id, name, ok, error? } results.
    */
   async bulkResume(
-    filter: (m: Monitor) => boolean
+    filter: (m: Monitor) => boolean,
   ): Promise<Array<{ id: number; name: string; ok: boolean; error?: string }>> {
     const monitorMap = await this.getMonitorList();
     const targets = Object.values(monitorMap).filter(filter);
@@ -706,13 +637,28 @@ export class KumaClient {
 
   /** Subscribe to individual heartbeat push events. Returns unsubscribe function. */
   onHeartbeat(callback: (monitorId: number, heartbeat: Heartbeat) => void): () => void {
-    const handler = (data: { monitorID: number; status: number; time: string; msg?: string; ping?: number }) => {
-      const hb: Heartbeat = { id: 0, monitorID: data.monitorID, status: data.status, time: data.time, msg: data.msg, ping: data.ping };
+    const handler = (data: {
+      monitorID: number;
+      status: number;
+      time: string;
+      msg?: string;
+      ping?: number;
+    }) => {
+      const hb: Heartbeat = {
+        id: 0,
+        monitorID: data.monitorID,
+        status: data.status,
+        time: data.time,
+        msg: data.msg,
+        ping: data.ping,
+      };
       this.heartbeatCache[data.monitorID] = hb;
       callback(data.monitorID, hb);
     };
     this.socket.on("heartbeat", handler);
-    return () => { this.socket.off("heartbeat", handler); };
+    return () => {
+      this.socket.off("heartbeat", handler);
+    };
   }
 
   /** Subscribe to uptime percentage push events. Returns unsubscribe function. */
@@ -722,19 +668,25 @@ export class KumaClient {
       callback(monitorId, period, value);
     };
     this.socket.on("uptime", handler);
-    return () => { this.socket.off("uptime", handler); };
+    return () => {
+      this.socket.off("uptime", handler);
+    };
   }
 
   /** Subscribe to disconnect events. Returns unsubscribe function. */
   onDisconnect(callback: (reason: string) => void): () => void {
     this.socket.on("disconnect", callback);
-    return () => { this.socket.off("disconnect", callback); };
+    return () => {
+      this.socket.off("disconnect", callback);
+    };
   }
 
   /** Subscribe to reconnect events. Returns unsubscribe function. */
   onReconnect(callback: () => void): () => void {
     this.socket.io.on("reconnect", callback);
-    return () => { this.socket.io.off("reconnect", callback); };
+    return () => {
+      this.socket.io.off("reconnect", callback);
+    };
   }
 
   disconnect(): void {
@@ -742,10 +694,7 @@ export class KumaClient {
   }
 }
 
-export async function createAuthenticatedClient(
-  url: string,
-  token: string
-): Promise<KumaClient> {
+export async function createAuthenticatedClient(url: string, token: string): Promise<KumaClient> {
   const client = new KumaClient(url);
   await client.connect();
   const ok = await client.loginByToken(token);

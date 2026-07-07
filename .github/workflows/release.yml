@@ -6,13 +6,13 @@ on:
 # Only one release job at a time; cancel if a newer push lands while running
 concurrency:
   group: release
-  cancel-in-progress: false   # don't cancel mid-release — let it finish
+  cancel-in-progress: false # don't cancel mid-release — let it finish
 
 permissions:
-  contents: write        # create tags + GitHub Release
-  issues: write          # comment on issues when fixed by a release
-  pull-requests: write   # comment on PRs when included in a release
-  id-token: write        # npm provenance (optional but good practice)
+  contents: write # create tags + GitHub Release
+  issues: write # comment on issues when fixed by a release
+  pull-requests: write # comment on PRs when included in a release
+  id-token: write # npm provenance (optional but good practice)
 
 jobs:
   release:
@@ -36,6 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build
+        run: vp build
 
       - name: Release
         env:

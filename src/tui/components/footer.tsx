@@ -11,7 +11,7 @@ export function Footer({ view, mode, selectedStatus }: FooterProps): React.React
   if (view === "detail") {
     return (
       <Box marginTop={1}>
-        <Text dimColor>Esc=back  r=refresh  i=instances  c=clusters  q=quit</Text>
+        <Text dimColor>Esc=back r=refresh i=instances c=clusters q=quit</Text>
       </Box>
     );
   }
@@ -19,7 +19,7 @@ export function Footer({ view, mode, selectedStatus }: FooterProps): React.React
   if (mode === "search") {
     return (
       <Box marginTop={1}>
-        <Text dimColor>Enter=confirm  Esc=clear and close</Text>
+        <Text dimColor>Enter=confirm Esc=clear and close</Text>
       </Box>
     );
   }
@@ -27,7 +27,7 @@ export function Footer({ view, mode, selectedStatus }: FooterProps): React.React
   if (mode === "filter-menu") {
     return (
       <Box marginTop={1}>
-        <Text dimColor>j/k=navigate  Enter=select  Esc=cancel</Text>
+        <Text dimColor>j/k=navigate Enter=select Esc=cancel</Text>
       </Box>
     );
   }
@@ -37,7 +37,7 @@ export function Footer({ view, mode, selectedStatus }: FooterProps): React.React
   return (
     <Box marginTop={1}>
       <Text dimColor>
-        q=quit  j/k=navigate  Enter=detail  r=refresh  /=search  f=filter
+        q=quit j/k=navigate Enter=detail r=refresh /=search f=filter
         {isPaused ? "  u=resume" : "  p=pause"}
         {"  d=delete  i=instances  c=clusters  h=help  Esc=clear"}
       </Text>

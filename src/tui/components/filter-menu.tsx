@@ -26,12 +26,8 @@ export function FilterMenu({
   onCancel,
   currentFilter,
 }: FilterMenuProps): React.ReactElement {
-  const initialIndex = FILTER_OPTIONS.findIndex(
-    (o) => o.value === currentFilter
-  );
-  const [selectedIndex, setSelectedIndex] = useState(
-    initialIndex >= 0 ? initialIndex : 0
-  );
+  const initialIndex = FILTER_OPTIONS.findIndex((o) => o.value === currentFilter);
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
 
   useInput((input, key) => {
     if (key.escape) {
@@ -47,23 +43,25 @@ export function FilterMenu({
       return;
     }
     if (input === "j" || key.downArrow) {
-      setSelectedIndex((prev) =>
-        Math.min(FILTER_OPTIONS.length - 1, prev + 1)
-      );
+      setSelectedIndex((prev) => Math.min(FILTER_OPTIONS.length - 1, prev + 1));
       return;
     }
   });
 
   return (
     <Box flexDirection="column" borderStyle="single" borderColor="yellow" paddingX={1}>
-      <Text bold color="yellow">Filter by status:</Text>
+      <Text bold color="yellow">
+        Filter by status:
+      </Text>
       {FILTER_OPTIONS.map((option, index) => {
         const isSelected = index === selectedIndex;
         const isCurrent = option.value === currentFilter;
         return (
           <Box key={option.label}>
             <Text>{isSelected ? "> " : "  "}</Text>
-            <Text color={option.color} bold={isSelected}>{option.label}</Text>
+            <Text color={option.color} bold={isSelected}>
+              {option.label}
+            </Text>
             {isCurrent && <Text dimColor> (current)</Text>}
           </Box>
         );

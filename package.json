@@ -1,42 +1,45 @@
 {
   "name": "@blackasteroid/kuma-cli",
   "version": "1.7.0",
-  "type": "module",
   "description": "CLI for managing Uptime Kuma via Socket.IO API",
-  "bin": {
-    "kuma": "dist/index.js"
-  },
-  "main": "./dist/index.js",
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "release": "semantic-release",
-    "release:dry": "semantic-release --dry-run"
-  },
   "keywords": [
-    "uptime-kuma",
     "cli",
-    "monitoring"
+    "monitoring",
+    "uptime-kuma"
   ],
-  "author": "Pablo Morales",
   "license": "MIT",
+  "author": "Pablo Morales",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pablofmorales/kuma-cli.git"
+  },
+  "bin": {
+    "kuma": "dist/index.mjs"
   },
   "files": [
     "dist/",
     "README.md"
   ],
+  "type": "module",
+  "main": "./dist/index.mjs",
   "publishConfig": {
     "access": "public"
   },
-  "engines": {
-    "node": ">=20"
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "typecheck": "vp check --no-fmt --no-lint",
+    "prepublishOnly": "npm run build",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "lint": "vp lint",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#dist\"",
+    "fix": "vp check --fix",
+    "fmt": "vp fmt",
+    "format": "vp fmt --check",
+    "check": "vp check",
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run"
   },
   "dependencies": {
     "chalk": "^5.6.2",
@@ -56,12 +59,25 @@
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.5.0",
+    "@types/node": "^26.0.0",
     "@types/react": "^19.2.14",
     "conventional-changelog-conventionalcommits": "^9.3.0",
+    "markdownlint-cli2": "^0.23.0",
     "semantic-release": "^25.0.3",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "typescript": "^6.0.3",
+    "vite-plus": "0.2.2"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "^11.0.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

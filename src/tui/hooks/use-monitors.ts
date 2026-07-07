@@ -115,10 +115,7 @@ export interface UseMonitorsResult {
   refresh: () => void;
 }
 
-export function useMonitors(
-  client: KumaClient,
-  refreshInterval: number
-): UseMonitorsResult {
+export function useMonitors(client: KumaClient, refreshInterval: number): UseMonitorsResult {
   const [monitors, setMonitors] = useState<MonitorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +167,7 @@ export function useMonitors(
                 return ns;
               });
               flashTimers.current.delete(monitorId);
-            }, 2000)
+            }, 2000),
           );
         }
 

@@ -14,20 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
           node-version: "20"
-          cache: "npm"
+          cache: true
 
       - name: Install dependencies
-        run: npm ci
+        run: vp install
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Check
+        run: vp check
 
       - name: Build
-        run: npm run build
+        run: vp build
 
       - name: Verify binary
         run: node dist/index.js --version

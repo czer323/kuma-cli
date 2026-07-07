@@ -34,9 +34,7 @@ export function useFilter(monitors: MonitorRow[]): UseFilterResult {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (m) =>
-          m.name.toLowerCase().includes(query) ||
-          m.url.toLowerCase().includes(query)
+        (m) => m.name.toLowerCase().includes(query) || m.url.toLowerCase().includes(query),
       );
     }
 

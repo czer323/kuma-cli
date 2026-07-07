@@ -13,7 +13,10 @@ export function useCommand(program: Command): void {
   program
     .command("use [name]")
     .description("Switch the active instance or cluster (affects all subsequent commands)")
-    .option("--cluster <name>", "Set a cluster as active context (commands default to its primary instance)")
+    .option(
+      "--cluster <name>",
+      "Set a cluster as active context (commands default to its primary instance)",
+    )
     .option("--json", "Output as JSON")
     .addHelpText(
       "after",
@@ -28,7 +31,7 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma cluster list")}                 ${chalk.dim("# See available cluster names")}
 
 ${chalk.dim("Once active, all commands target that instance unless overridden with --instance or --cluster.")}
-`
+`,
     )
     .action((name: string | undefined, opts: { cluster?: string; json?: boolean }) => {
       if (opts.cluster) {
@@ -43,7 +46,10 @@ ${chalk.dim("Once active, all commands target that instance unless overridden wi
           process.exit(1);
         }
         setActiveContext({ type: "cluster", name: opts.cluster });
-        if (isJsonMode(opts)) return jsonOut({ active: { type: "cluster", name: opts.cluster, primary: cluster.primary } });
+        if (isJsonMode(opts))
+          return jsonOut({
+            active: { type: "cluster", name: opts.cluster, primary: cluster.primary },
+          });
         success(`Active context: cluster '${opts.cluster}' (primary: ${cluster.primary})`);
         return;
       }

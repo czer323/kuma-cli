@@ -52,7 +52,7 @@ export function App({
   const [activeClient, setActiveClient] = useState<KumaClient | null>(initialClient ?? null);
   const [activeInstanceName, setActiveInstanceName] = useState(initialInstanceName ?? "");
   const [activeClusterName, setActiveClusterName] = useState<string | null>(
-    initialClusterName ?? null
+    initialClusterName ?? null,
   );
   const [overlay, setOverlay] = useState<OverlayMode>("none");
   const [connecting, setConnecting] = useState(false);
@@ -92,20 +92,22 @@ export function App({
   }
 
   // From here on, activeClient is guaranteed non-null
-  return <Dashboard
-    client={activeClient}
-    instanceName={activeInstanceName}
-    clusterName={activeClusterName}
-    refreshInterval={refreshInterval}
-    exit={exit}
-    setActiveClient={setActiveClient}
-    setActiveInstanceName={setActiveInstanceName}
-    setActiveClusterName={setActiveClusterName}
-    overlay={overlay}
-    setOverlay={setOverlay}
-    connecting={connecting}
-    setConnecting={setConnecting}
-  />;
+  return (
+    <Dashboard
+      client={activeClient}
+      instanceName={activeInstanceName}
+      clusterName={activeClusterName}
+      refreshInterval={refreshInterval}
+      exit={exit}
+      setActiveClient={setActiveClient}
+      setActiveInstanceName={setActiveInstanceName}
+      setActiveClusterName={setActiveClusterName}
+      overlay={overlay}
+      setOverlay={setOverlay}
+      connecting={connecting}
+      setConnecting={setConnecting}
+    />
+  );
 }
 
 interface DashboardProps {
@@ -139,7 +141,7 @@ function Dashboard({
 }: DashboardProps): React.ReactElement {
   const { monitors, loading, error, connected, changedMonitorIds, refresh } = useMonitors(
     activeClient,
-    refreshInterval
+    refreshInterval,
   );
   const {
     filteredMonitors,
@@ -159,10 +161,12 @@ function Dashboard({
   const [loadingMonitorId, setLoadingMonitorId] = useState<number | null>(null);
   const { toastMessage, toastColor, showToast } = useToast();
 
-  const { heartbeats, loading: hbLoading, error: hbError, refresh: hbRefresh } = useHeartbeats(
-    activeClient,
-    view === "detail" ? selectedMonitorId : null
-  );
+  const {
+    heartbeats,
+    loading: hbLoading,
+    error: hbError,
+    refresh: hbRefresh,
+  } = useHeartbeats(activeClient, view === "detail" ? selectedMonitorId : null);
 
   const selectedMonitor = filteredMonitors.length > 0 ? filteredMonitors[selectedIndex] : null;
   const displayName = activeClusterName
@@ -204,7 +208,7 @@ function Dashboard({
         setConnecting(false);
       }
     },
-    [activeClient, activeInstanceName, activeClusterName, showToast, clearFilters]
+    [activeClient, activeInstanceName, activeClusterName, showToast, clearFilters],
   );
 
   const switchToCluster = useCallback(
@@ -246,7 +250,7 @@ function Dashboard({
         setConnecting(false);
       }
     },
-    [activeClient, activeClusterName, showToast, clearFilters]
+    [activeClient, activeClusterName, showToast, clearFilters],
   );
 
   // --- Monitor actions ---
@@ -270,7 +274,7 @@ function Dashboard({
         setLoadingMonitorId(null);
       }
     },
-    [activeClient, refresh, showToast]
+    [activeClient, refresh, showToast],
   );
 
   const handleConfirm = useCallback(() => {
@@ -349,9 +353,18 @@ function Dashboard({
     if (mode === "filter-menu") return;
 
     // Normal list view controls
-    if (input === "r") { refresh(); return; }
-    if (input === "/") { setMode("search"); return; }
-    if (input === "f") { setMode("filter-menu"); return; }
+    if (input === "r") {
+      refresh();
+      return;
+    }
+    if (input === "/") {
+      setMode("search");
+      return;
+    }
+    if (input === "f") {
+      setMode("filter-menu");
+      return;
+    }
 
     if (key.escape) {
       if (hasActiveFilters) {
@@ -379,7 +392,11 @@ function Dashboard({
 
     // Pause
     if (input === "p" && selectedMonitor && selectedMonitor.status !== 3) {
-      setPendingAction({ type: "pause", monitorId: selectedMonitor.id, monitorName: selectedMonitor.name });
+      setPendingAction({
+        type: "pause",
+        monitorId: selectedMonitor.id,
+        monitorName: selectedMonitor.name,
+      });
       return;
     }
 
@@ -388,15 +405,26 @@ function Dashboard({
       setLoadingMonitorId(selectedMonitor.id);
       activeClient
         .resumeMonitor(selectedMonitor.id)
-        .then(() => { showToast(`Monitor "${selectedMonitor.name}" resumed`, "green"); refresh(); })
-        .catch((err: Error) => { showToast(`Error: ${err.message}`, "red", 4000); })
-        .finally(() => { setLoadingMonitorId(null); });
+        .then(() => {
+          showToast(`Monitor "${selectedMonitor.name}" resumed`, "green");
+          refresh();
+        })
+        .catch((err: Error) => {
+          showToast(`Error: ${err.message}`, "red", 4000);
+        })
+        .finally(() => {
+          setLoadingMonitorId(null);
+        });
       return;
     }
 
     // Delete
     if (input === "d" && selectedMonitor) {
-      setPendingAction({ type: "delete", monitorId: selectedMonitor.id, monitorName: selectedMonitor.name });
+      setPendingAction({
+        type: "delete",
+        monitorId: selectedMonitor.id,
+        monitorName: selectedMonitor.name,
+      });
       return;
     }
   });
@@ -519,14 +547,16 @@ function Dashboard({
         filteredCount={hasActiveFilters ? filteredMonitors.length : undefined}
       />
 
-      {mode === "search" && (
-        <SearchInput value={searchQuery} onChange={setSearchQuery} />
-      )}
+      {mode === "search" && <SearchInput value={searchQuery} onChange={setSearchQuery} />}
 
       {mode === "filter-menu" && (
         <FilterMenu
           currentFilter={statusFilter}
-          onSelect={(status) => { setStatusFilter(status); setMode("normal"); setSelectedIndex(0); }}
+          onSelect={(status) => {
+            setStatusFilter(status);
+            setMode("normal");
+            setSelectedIndex(0);
+          }}
           onCancel={() => setMode("normal")}
         />
       )}
@@ -550,11 +580,11 @@ function Dashboard({
         />
       )}
 
-      {toastMessage && !pendingAction && (
-        <Toast message={toastMessage} color={toastColor} />
-      )}
+      {toastMessage && !pendingAction && <Toast message={toastMessage} color={toastColor} />}
 
-      {!pendingAction && <Footer view="list" mode={mode} selectedStatus={selectedMonitor?.status} />}
+      {!pendingAction && (
+        <Footer view="list" mode={mode} selectedStatus={selectedMonitor?.status} />
+      )}
     </Box>
   );
 }

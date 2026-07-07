@@ -32,9 +32,13 @@ export function ConfirmDialog({
       </Box>
       <Box>
         <Text dimColor>Press </Text>
-        <Text color="green" bold>y</Text>
+        <Text color="green" bold>
+          y
+        </Text>
         <Text dimColor> to confirm, </Text>
-        <Text color="red" bold>n</Text>
+        <Text color="red" bold>
+          n
+        </Text>
         <Text dimColor> or Esc to cancel</Text>
       </Box>
     </Box>

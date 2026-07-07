@@ -47,10 +47,14 @@ export function resolveInstanceName(flags: CommandFlags): string {
   if (names.length === 1) return names[0];
 
   if (names.length === 0) throw new Error("No instances configured. Run: kuma login <url>");
-  throw new Error(`No active instance. Multiple instances found: ${names.join(", ")}. Run: kuma use <name>`);
+  throw new Error(
+    `No active instance. Multiple instances found: ${names.join(", ")}. Run: kuma use <name>`,
+  );
 }
 
-export async function resolveClient(flags: CommandFlags): Promise<{ client: KumaClient; instanceName: string }> {
+export async function resolveClient(
+  flags: CommandFlags,
+): Promise<{ client: KumaClient; instanceName: string }> {
   const name = resolveInstanceName(flags);
   const config = getInstanceConfig(name);
   if (!config) throw new Error(`Instance '${name}' not found.`);
@@ -74,9 +78,10 @@ export function resolveClusterName(flags: CommandFlags): string {
   throw new Error("No cluster specified. Use --cluster <name> or: kuma use --cluster <name>");
 }
 
-export async function resolveClusterClients(
-  clusterName: string
-): Promise<{ clients: { name: string; client: KumaClient }[]; failures: { name: string; error: string }[] }> {
+export async function resolveClusterClients(clusterName: string): Promise<{
+  clients: { name: string; client: KumaClient }[];
+  failures: { name: string; error: string }[];
+}> {
   const cluster = getClusterConfig(clusterName);
   if (!cluster) throw new Error(`Cluster '${clusterName}' not found.`);
 
@@ -89,7 +94,7 @@ export async function resolveClusterClients(
       if (!config) throw new Error(`Instance '${instanceName}' not configured`);
       const client = await createAuthenticatedClient(config.url, config.token);
       return { name: instanceName, client };
-    })
+    }),
   );
 
   for (let i = 0; i < results.length; i++) {

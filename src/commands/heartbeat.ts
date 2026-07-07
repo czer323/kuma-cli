@@ -26,12 +26,11 @@ ${chalk.dim("Subcommands:")}
   ${chalk.cyan("heartbeat send <push-token>")}      Send a push heartbeat (for scripts / GitHub Actions)
 
 ${chalk.dim("Run")} ${chalk.cyan("kuma heartbeat <subcommand> --help")} ${chalk.dim("for examples.")}
-`
+`,
     );
 
   // ── VIEW ────────────────────────────────────────────────────────────────────
-  hb
-    .command("view <monitor-id>")
+  hb.command("view <monitor-id>")
     .description("View recent heartbeats (check results) for a monitor")
     .option("--limit <n>", "Maximum number of heartbeats to display (default: 20)", "20")
     .option("--json", "Output as JSON ({ ok, data })")
@@ -44,53 +43,57 @@ ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma heartbeat view 42 --limit 50")}
   ${chalk.cyan("kuma heartbeat view 42 --json")}
   ${chalk.cyan("kuma heartbeat view 42 --json | jq '.data[] | select(.status == 0)'")}
-`
+`,
     )
-    .action(async (monitorId: string, opts: { limit?: string; json?: boolean; instance?: string }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (monitorId: string, opts: { limit?: string; json?: boolean; instance?: string }) => {
+        const json = isJsonMode(opts);
 
-      const parsedMonitorId = parseInt(monitorId, 10);
-      if (isNaN(parsedMonitorId) || parsedMonitorId <= 0) {
-        handleError(new Error(`Invalid monitor ID: "${monitorId}". Must be a positive integer.`), opts);
-      }
-
-      try {
-        const { client } = await resolveClient(opts);
-        const heartbeats = await client.getHeartbeatList(parsedMonitorId);
-        client.disconnect();
-
-        const limit = parseInt(opts.limit ?? "20", 10);
-        const recent = heartbeats.slice(-limit).reverse();
-
-        if (json) {
-          jsonOut(recent);
+        const parsedMonitorId = parseInt(monitorId, 10);
+        if (isNaN(parsedMonitorId) || parsedMonitorId <= 0) {
+          handleError(
+            new Error(`Invalid monitor ID: "${monitorId}". Must be a positive integer.`),
+            opts,
+          );
         }
 
-        if (recent.length === 0) {
-          console.log("No heartbeats found.");
-          return;
+        try {
+          const { client } = await resolveClient(opts);
+          const heartbeats = await client.getHeartbeatList(parsedMonitorId);
+          client.disconnect();
+
+          const limit = parseInt(opts.limit ?? "20", 10);
+          const recent = heartbeats.slice(-limit).reverse();
+
+          if (json) {
+            jsonOut(recent);
+          }
+
+          if (recent.length === 0) {
+            console.log("No heartbeats found.");
+            return;
+          }
+
+          const table = createTable(["Time", "Status", "Ping", "Message"]);
+          recent.forEach((hb) => {
+            table.push([
+              formatDate(hb.time),
+              statusLabel(hb.status),
+              formatPing(hb.ping),
+              hb.msg ?? "—",
+            ]);
+          });
+
+          console.log(table.toString());
+          console.log(`\nShowing last ${recent.length} heartbeat(s)`);
+        } catch (err) {
+          handleError(err, opts);
         }
-
-        const table = createTable(["Time", "Status", "Ping", "Message"]);
-        recent.forEach((hb) => {
-          table.push([
-            formatDate(hb.time),
-            statusLabel(hb.status),
-            formatPing(hb.ping),
-            hb.msg ?? "—",
-          ]);
-        });
-
-        console.log(table.toString());
-        console.log(`\nShowing last ${recent.length} heartbeat(s)`);
-      } catch (err) {
-        handleError(err, opts);
-      }
-    });
+      },
+    );
 
   // ── SEND ─────────────────────────────────────────────────────────────────────
-  hb
-    .command("send <push-token>")
+  hb.command("send <push-token>")
     .description("Send a push heartbeat to a Kuma push monitor (for scripts and GitHub Actions)")
     .option("--status <status>", "Heartbeat status: up, down, maintenance (default: up)")
     .option("--msg <message>", "Optional status message")
@@ -103,8 +106,8 @@ ${chalk.dim("Examples:")}
       `
 ${chalk.dim("Examples:")}
   ${chalk.cyan("kuma heartbeat send abc123")}
-  ${chalk.cyan("kuma heartbeat send abc123 --status down --msg \"Job failed\"")}
-  ${chalk.cyan("kuma heartbeat send abc123 --msg \"Deploy complete\" --ping 42")}
+  ${chalk.cyan('kuma heartbeat send abc123 --status down --msg "Job failed"')}
+  ${chalk.cyan('kuma heartbeat send abc123 --msg "Deploy complete" --ping 42')}
   ${chalk.cyan("kuma heartbeat send abc123 --json")}
 
 ${chalk.dim("GitHub Actions usage:")}
@@ -118,101 +121,110 @@ ${chalk.dim("Finding your push token:")}
   Use only the <token> part.
 
   Or get it from CLI: kuma monitors create --type push --name "my-runner" --json | jq '.data.pushToken'
-`
+`,
     )
-    .action(async (pushToken: string, opts: {
-      status?: string;
-      msg?: string;
-      ping?: string;
-      url?: string;
-      instance?: string;
-      json?: boolean;
-    }) => {
-      const json = isJsonMode(opts);
+    .action(
+      async (
+        pushToken: string,
+        opts: {
+          status?: string;
+          msg?: string;
+          ping?: string;
+          url?: string;
+          instance?: string;
+          json?: boolean;
+        },
+      ) => {
+        const json = isJsonMode(opts);
 
-      // Fix #3: Validate pushToken to prevent path traversal / URL injection.
-      // Kuma generates tokens as hex strings; reject anything else.
-      if (!/^[a-zA-Z0-9_-]+$/.test(pushToken)) {
-        const msg = `Invalid push token format. Tokens must contain only alphanumeric characters, hyphens, and underscores.`;
-        if (json) jsonError(msg, EXIT_CODES.GENERAL);
-        console.error(chalk.red(`❌ ${msg}`));
-        process.exit(EXIT_CODES.GENERAL);
-      }
-
-      // Validate status before doing any network call
-      const VALID_STATUSES = ["up", "down", "maintenance"];
-      const statusKey = (opts.status ?? "up").toLowerCase();
-      if (!VALID_STATUSES.includes(statusKey)) {
-        const msg = `Invalid status "${opts.status}". Valid: up, down, maintenance`;
-        if (json) jsonError(msg, EXIT_CODES.GENERAL);
-        console.error(chalk.red(`❌ ${msg}`));
-        process.exit(EXIT_CODES.GENERAL);
-      }
-
-      // Determine base URL
-      let baseUrl = opts.url;
-      if (!baseUrl) {
-        if (opts.instance) {
-          const inst = getInstanceConfig(opts.instance);
-          if (!inst) {
-            const msg = `Instance "${opts.instance}" not found. Run: kuma instance list`;
-            if (json) jsonError(msg, EXIT_CODES.AUTH);
-            console.error(chalk.red(`❌ ${msg}`));
-            process.exit(EXIT_CODES.AUTH);
-          }
-          baseUrl = inst.url;
-        } else {
-          const config = getConfig();
-          if (!config) {
-            const msg = "No --url specified and not logged in. Run: kuma login <url> or pass --url";
-            if (json) jsonError(msg, EXIT_CODES.AUTH);
-            console.error(chalk.red(`❌ ${msg}`));
-            process.exit(EXIT_CODES.AUTH);
-          }
-          baseUrl = config.url;
-        }
-      }
-
-      // Build the push URL
-      const pushUrl = new URL(`${baseUrl.replace(/\/$/, "")}/api/push/${pushToken}`);
-      pushUrl.searchParams.set("status", statusKey);
-      if (opts.msg) pushUrl.searchParams.set("msg", opts.msg);
-      if (opts.ping) pushUrl.searchParams.set("ping", opts.ping);
-
-      try {
-        const res = await fetch(pushUrl.toString(), {
-          signal: AbortSignal.timeout(10_000),
-        });
-
-        if (!res.ok) {
-          const body = await res.text().catch(() => "");
-          const msg = `Push failed (HTTP ${res.status}): ${body || res.statusText}`;
+        // Fix #3: Validate pushToken to prevent path traversal / URL injection.
+        // Kuma generates tokens as hex strings; reject anything else.
+        if (!/^[a-zA-Z0-9_-]+$/.test(pushToken)) {
+          const msg = `Invalid push token format. Tokens must contain only alphanumeric characters, hyphens, and underscores.`;
           if (json) jsonError(msg, EXIT_CODES.GENERAL);
           console.error(chalk.red(`❌ ${msg}`));
           process.exit(EXIT_CODES.GENERAL);
         }
 
-        // Kuma push endpoint returns { ok: boolean, msg?: string }
-        const data = await res.json().catch(() => ({ ok: true })) as { ok?: boolean; msg?: string };
-
-        if (data.ok === false) {
-          // Server returned ok:false inside a 200 response (e.g. invalid token)
-          const msg = data.msg ?? "Kuma rejected the push heartbeat";
+        // Validate status before doing any network call
+        const VALID_STATUSES = ["up", "down", "maintenance"];
+        const statusKey = (opts.status ?? "up").toLowerCase();
+        if (!VALID_STATUSES.includes(statusKey)) {
+          const msg = `Invalid status "${opts.status}". Valid: up, down, maintenance`;
           if (json) jsonError(msg, EXIT_CODES.GENERAL);
           console.error(chalk.red(`❌ ${msg}`));
           process.exit(EXIT_CODES.GENERAL);
         }
 
-        if (json) {
-          jsonOut({ pushToken, status: statusKey, msg: opts.msg ?? null });
+        // Determine base URL
+        let baseUrl = opts.url;
+        if (!baseUrl) {
+          if (opts.instance) {
+            const inst = getInstanceConfig(opts.instance);
+            if (!inst) {
+              const msg = `Instance "${opts.instance}" not found. Run: kuma instance list`;
+              if (json) jsonError(msg, EXIT_CODES.AUTH);
+              console.error(chalk.red(`❌ ${msg}`));
+              process.exit(EXIT_CODES.AUTH);
+            }
+            baseUrl = inst.url;
+          } else {
+            const config = getConfig();
+            if (!config) {
+              const msg =
+                "No --url specified and not logged in. Run: kuma login <url> or pass --url";
+              if (json) jsonError(msg, EXIT_CODES.AUTH);
+              console.error(chalk.red(`❌ ${msg}`));
+              process.exit(EXIT_CODES.AUTH);
+            }
+            baseUrl = config.url;
+          }
         }
 
-        success(`Push heartbeat sent (${statusKey}${opts.msg ? ` — ${opts.msg}` : ""})`);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (json) jsonError(msg, EXIT_CODES.CONNECTION);
-        console.error(chalk.red(`❌ ${msg}`));
-        process.exit(EXIT_CODES.CONNECTION);
-      }
-    });
+        // Build the push URL
+        const pushUrl = new URL(`${baseUrl.replace(/\/$/, "")}/api/push/${pushToken}`);
+        pushUrl.searchParams.set("status", statusKey);
+        if (opts.msg) pushUrl.searchParams.set("msg", opts.msg);
+        if (opts.ping) pushUrl.searchParams.set("ping", opts.ping);
+
+        try {
+          const res = await fetch(pushUrl.toString(), {
+            signal: AbortSignal.timeout(10_000),
+          });
+
+          if (!res.ok) {
+            const body = await res.text().catch(() => "");
+            const msg = `Push failed (HTTP ${res.status}): ${body || res.statusText}`;
+            if (json) jsonError(msg, EXIT_CODES.GENERAL);
+            console.error(chalk.red(`❌ ${msg}`));
+            process.exit(EXIT_CODES.GENERAL);
+          }
+
+          // Kuma push endpoint returns { ok: boolean, msg?: string }
+          const data = (await res.json().catch(() => ({ ok: true }))) as {
+            ok?: boolean;
+            msg?: string;
+          };
+
+          if (data.ok === false) {
+            // Server returned ok:false inside a 200 response (e.g. invalid token)
+            const msg = data.msg ?? "Kuma rejected the push heartbeat";
+            if (json) jsonError(msg, EXIT_CODES.GENERAL);
+            console.error(chalk.red(`❌ ${msg}`));
+            process.exit(EXIT_CODES.GENERAL);
+          }
+
+          if (json) {
+            jsonOut({ pushToken, status: statusKey, msg: opts.msg ?? null });
+          }
+
+          success(`Push heartbeat sent (${statusKey}${opts.msg ? ` — ${opts.msg}` : ""})`);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (json) jsonError(msg, EXIT_CODES.CONNECTION);
+          console.error(chalk.red(`❌ ${msg}`));
+          process.exit(EXIT_CODES.CONNECTION);
+        }
+      },
+    );
 }

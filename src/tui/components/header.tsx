@@ -47,7 +47,9 @@ export function Header({
     <Box flexDirection="column" marginBottom={1}>
       <Box flexDirection="column">
         {LOGO.map((line, i) => (
-          <Text key={i} color="#db2777" bold>{line}</Text>
+          <Text key={i} color="#db2777" bold>
+            {line}
+          </Text>
         ))}
       </Box>
       <Box marginTop={1}>
@@ -88,13 +90,9 @@ export function Header({
       {hasFilters && (
         <Box>
           <Text dimColor>Active filters: </Text>
-          {searchQuery && (
-            <Text color="yellow">search="{searchQuery}" </Text>
-          )}
+          {searchQuery && <Text color="yellow">search="{searchQuery}" </Text>}
           {statusFilter !== null && statusFilter !== undefined && (
-            <Text color="yellow">
-              status={STATUS_NAMES[statusFilter] ?? "UNKNOWN"}
-            </Text>
+            <Text color="yellow">status={STATUS_NAMES[statusFilter] ?? "UNKNOWN"}</Text>
           )}
         </Box>
       )}
